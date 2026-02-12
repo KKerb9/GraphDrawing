@@ -113,8 +113,10 @@ if __name__ == "__main__":
         #                 P[j][j] = 0.1 * i
         #         gen2(name="SBMgraph" + str(10 + i), szs=szs, P=P)
 
-        gen1("LargeGraph", n=100, p=0.5)
+        # gen1("LargeGraph", n=100, p=0.5)
         
+        gen1("SmallGraph", n=5, p=0.7)
+
         upload_json()
 
 
