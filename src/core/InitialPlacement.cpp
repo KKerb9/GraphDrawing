@@ -1,4 +1,4 @@
-#include "core/InitialPlacement.h"
+#include "InitialPlacement.h"
 
 namespace gd {
 

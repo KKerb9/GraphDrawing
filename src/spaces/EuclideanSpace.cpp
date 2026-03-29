@@ -1,13 +1,8 @@
-#include "core/Space.h"
+#include "EuclideanSpace.h"
 
 #include <cmath>
 
 namespace gd {
-
-bool Space::isValid(const Coord& c) const {
-        return static_cast<std::int32_t>(c.size()) == _dim;
-        // throw SpaceError("coordinate dimension mismatch");
-}
 
 EuclideanSpace::EuclideanSpace(std::int32_t dim) : _dim(dim), _name("euclidean") {}
 
@@ -31,12 +26,9 @@ double EuclideanSpace::dist(const Coord& a, const Coord& b) const {
         return std::sqrt(sum);
 }
 
-std::unique_ptr<Space> createSpace(const std::string& spaceName, std::int32_t dim) {
-	if (spaceName == "euclidean") {
-		return std::make_unique<EuclideanSpace>(dim);
-	}
-	throw SpaceError("createSpace: unknown space name: " + spaceName);
+bool EuclideanSpace::isValid(const Coord& c) const {
+        return static_cast<std::int32_t>(c.size()) == _dim;
+        // throw SpaceError("coordinate dimension mismatch");
 }
 
 } // namespace gd
-

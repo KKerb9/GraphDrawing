@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "core/Errors.h"
-#include "core/Graph.h"
+#include "../core/Errors.h"
+#include "../core/Graph.h"
 
 namespace gd {
 

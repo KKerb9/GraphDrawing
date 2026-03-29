@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "core/Errors.h"
+#include "../core/Errors.h"
 
 namespace gd {
 

@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "core/Embedding.h"
-#include "core/Errors.h"
+#include "../core/Embedding.h"
+#include "../core/Errors.h"
 
 namespace gd {
 

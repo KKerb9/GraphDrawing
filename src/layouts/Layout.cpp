@@ -1,5 +1,5 @@
-#include "layouts/Layout.h"
-#include "layouts/RandomLayout.h"
+#include "Layout.h"
+#include "RandomLayout.h"
 
 namespace gd {
 

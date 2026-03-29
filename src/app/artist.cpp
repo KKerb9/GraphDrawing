@@ -2,17 +2,17 @@
 #include <iostream>
 #include <memory>
 
-#include "core/Embedding.h"
-#include "core/Errors.h"
-#include "core/Graph.h"
-#include "core/InitialPlacement.h"
-#include "core/Projection.h"
-#include "core/Space.h"
-#include "io/Config.h"
-#include "io/EmbeddingWriter.h"
-#include "io/JsonGraphReader.h"
-#include "layouts/Layout.h"
-#include "metrics/Metrics.h"
+#include "../core/Embedding.h"
+#include "../core/Errors.h"
+#include "../core/Graph.h"
+#include "../core/InitialPlacement.h"
+#include "../projections/Projection.h"
+#include "../spaces/Space.h"
+#include "../io/Config.h"
+#include "../io/EmbeddingWriter.h"
+#include "../io/JsonGraphReader.h"
+#include "../layouts/Layout.h"
+#include "../metrics/Metrics.h"
 
 using namespace gd;
 

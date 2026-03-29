@@ -8,14 +8,14 @@ LDFLAGS := -fsanitize=address,undefined
 
 SRCS := $(shell find src -name '*.cpp')
 
-.PHONY: all clean run-test
+.PHONY: all clear run-test
 
 all: artist
 
 artist:
 	$(CXX) $(CXXFLAGS) $(SRCS) -o $@ $(LDFLAGS)
 
-clean:
+clear:
 	rm -f artist
 
 run-test: artist

@@ -3,21 +3,22 @@
 #include <cstddef>
 #include <vector>
 
-#include "core/Errors.h"
+#include "Errors.h"
+#include "Graph.h"
 
 namespace gd {
 
 using Coord = std::vector<double>;
 
 struct Vec2 {
-        double x{};
-        double y{};
+        double x;
+        double y;
 };
 
 struct Vec3 {
-        double x{};
-        double y{};
-        double z{};
+        double x;
+        double y;
+        double z;
 };
 
 class EmbeddingError : public GraphDrawingError {
@@ -27,8 +28,10 @@ public:
 
 // над графом
 class Embedding {
+        friend class LayoutAlgorithm;
+        friend class ZeroInitialPlacement;
 public:
-        Embedding() = default;
+        // Embedding() = default;
         Embedding(Graph& graph);  // найти начальную расстановку
         Embedding(Graph& graph, const std::vector<Coord>& startCoords);
 
@@ -41,12 +44,14 @@ public:
 
         std::int32_t dimension() const;
 
-        const std::vector<Coord>& all() const;
+        const std::vector<Coord>& getCoords() const;
+
+        const Graph& getGraph() const;
 
 private:
+        Graph& _graph;
         std::int32_t curDim;
         std::vector<Coord> _coords;
-        Graph& _graph;
 };
 
 } // namespace gd

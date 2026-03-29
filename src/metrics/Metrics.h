@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/Embedding.h"
-#include "core/Errors.h"
-#include "core/Space.h"
+#include "../core/Embedding.h"
+#include "../core/Errors.h"
+#include "../spaces/Space.h"
 
 namespace gd {
 

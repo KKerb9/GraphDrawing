@@ -1,4 +1,4 @@
-#include "io/EmbeddingWriter.h"
+#include "EmbeddingWriter.h"
 
 #include <fstream>
 
@@ -35,18 +35,44 @@ void writeEmbeddingJson(const std::string& outputPath,
         out << "  \"projection\": \"" << proj.name() << "\",\n";
         out << "  \"nodes\": [\n";
 
-        const auto& coords = emb.all();
-        for (std::int32_t v = 0; v < emb.size(); v++) {
-                const auto& c = coords[v];
-                const auto p = proj.project2D(c);
+        {
+                auto tmp = emb.getCoords();
+                int n = tmp.size();
+                for (std::int32_t i = 0; i < n - 1; i++) {
+                        const auto& c = tmp[i];
+                        auto p = Vec2{0.0, 0.0};
+                        if (proj.name() == "identity") {
+                                p = Vec2{c[0], c[1]};
+                        } else if (proj.name() == "euclidean") {
+                                p = proj.project2D(c);
+                        } else {
+                                throw EmbeddingWriterError("Unknown projection name: " + proj.name());
+                        }
 
-                out << "    {\"id\": " << v << ", \"x\": " << p.x << ", \"y\": " << p.y << "}";
-                if (v + 1 < emb.size()) {
-                        out << ',';
+                        out << "    {\"id\": " << i << ", \"x\": " << p.x << ", \"y\": " << p.y << "},\n";
                 }
-                out << '\n';
+                const auto& c = tmp[n - 1];
+                auto p = Vec2{0.0, 0.0};
+                if (proj.name() == "identity") {
+                        p = Vec2{c[0], c[1]};
+                } else if (proj.name() == "euclidean") {
+                        p = proj.project2D(c);
+                } else {
+                        throw EmbeddingWriterError("Unknown projection name: " + proj.name());
+                }
+                out << "    {\"id\": " << n - 1 << ", \"x\": " << p.x << ", \"y\": " << p.y << "}\n";
         }
 
+        out << "  ],\n";
+        out << "  \"edges\": [\n";
+        {
+                auto tmp = emb.getGraph().edges();
+                int n = tmp.size();
+                for (std::int32_t i = 0; i < n - 1; i++) {
+                        out << "    [" << tmp[i].first << ", " << tmp[i].second << "],\n";
+                }
+                out << "    [" << tmp[n - 1].first << ", " << tmp[n - 1].second << "]\n";
+        }
         out << "  ],\n";
         out << "  \"metrics\": {\n";
         out << "    \"stress\": " << metrics.stress << ",\n";

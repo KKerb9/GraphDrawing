@@ -4,8 +4,8 @@
 #include <memory>
 #include <string>
 
-#include "core/Embedding.h"
-#include "core/Errors.h"
+#include "../core/Embedding.h"
+#include "../core/Errors.h"
 
 namespace gd {
 
@@ -24,25 +24,9 @@ public:
 
         virtual double dist(const Coord& a, const Coord& b) const = 0;
 
-        virtual bool isValid(const Coord& c) const;
-};
-
-class EuclideanSpace : public Space {
-public:
-        explicit EuclideanSpace(std::int32_t dim);
-
-        std::string name() const override;
-
-        std::int32_t dimension() const noexcept override;
-
-        double dist(const Coord& a, const Coord& b) const override;
-
-private:
-        std::int32_t _dim;
-        std::string _name;
+        virtual bool isValid(const Coord& c) const = 0;
 };
 
 std::unique_ptr<Space> createSpace(const std::string& spaceName, std::int32_t dim);
 
 } // namespace gd
-

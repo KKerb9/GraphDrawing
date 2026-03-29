@@ -1,4 +1,4 @@
-#include "core/Embedding.h"
+#include "Embedding.h"
 
 namespace gd {
 
@@ -51,8 +51,12 @@ std::int32_t Embedding::dimension() const {
         return static_cast<std::int32_t>(curDim);
 }
 
-const std::vector<Coord>& Embedding::all() const {
+const std::vector<Coord>& Embedding::getCoords() const {
         return _coords;
+}
+
+const Graph& Embedding::getGraph() const {
+        return _graph;
 }
 
 } // namespace gd

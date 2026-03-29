@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "core/Embedding.h"
-#include "core/Errors.h"
-#include "core/Projection.h"
-#include "metrics/Metrics.h"
+#include "../core/Embedding.h"
+#include "../core/Errors.h"
+#include "../projections/Projection.h"
+#include "../metrics/Metrics.h"
 
 namespace gd {
 

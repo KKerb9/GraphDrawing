@@ -1,6 +1,6 @@
 #pragma once
 
-#include "layouts/Layout.h"
+#include "Layout.h"
 
 namespace gd {
 
