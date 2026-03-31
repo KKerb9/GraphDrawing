@@ -26,7 +26,7 @@ public:
 
 class IdentityProjection : public Projection {
 public:
-        explicit IdentityProjection(std::int32_t dim);
+        explicit IdentityProjection(int32_t dim);
 
         std::string name() const override;
 
@@ -35,11 +35,13 @@ public:
 	Vec3 project3D(const Coord& c) const override;
 
 private:
-        std::int32_t _dim;
+        int32_t _dim;
         std::string _name;
 };
 
-std::unique_ptr<Projection> createProjection(const std::string& spaceName, std::int32_t dim);
+using ProjectionPtr = std::unique_ptr<Projection>;
+
+ProjectionPtr createProjection(const std::string& spaceName, int32_t dim);
 
 } // namespace gd
 

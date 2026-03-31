@@ -25,5 +25,16 @@ public:
 	void computeInitial(Embedding& emb, const Space& space) const override;
 };
 
+class RandomInitialPlacement final : public InitialPlacementStrategy {
+public:
+        explicit RandomInitialPlacement() = default;
+
+	void computeInitial(Embedding& emb, const Space& space) const override;
+};
+
+using InitialPlacementStrategyPtr = std::unique_ptr<InitialPlacementStrategy>;
+
+InitialPlacementStrategyPtr createInitialPlacementStrategy(const std::string& name);
+
 } // namespace gd
 

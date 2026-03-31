@@ -16,23 +16,23 @@ class Graph {
 public:
 	Graph() = default;
 
-	explicit Graph(std::int32_t vertexCount);
+	explicit Graph(int32_t vertexCount);
 
-	std::int32_t vertexCount() const;
-	std::int32_t edgeCount() const;
+	int32_t vertexCount() const;
+	int32_t edgeCount() const;
 
-	std::int32_t addVertex();
+	int32_t addVertex();
 
-	void addEdge(std::int32_t u, std::int32_t v);
+	void addEdge(int32_t u, int32_t v);
 
-	const std::vector<std::int32_t>& neighbors(std::int32_t v) const;
+	const std::vector<int32_t>& neighbors(int32_t v) const;
 
-	const std::vector<std::pair<std::int32_t, std::int32_t>>& edges() const;
+	const std::vector<std::pair<int32_t, int32_t>>& edges() const;
 private:
-	std::vector<std::vector<std::int32_t>> _matr;
-	std::vector<std::pair<std::int32_t, std::int32_t>> _edges;
-	std::int32_t _n;
-	std::int32_t _m;
+	std::vector<std::vector<int32_t>> _matr;
+	std::vector<std::pair<int32_t, int32_t>> _edges;
+	int32_t _n;
+	int32_t _m;
 };
 
 } // namespace gd

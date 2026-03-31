@@ -61,13 +61,13 @@ void ensureInt32VertexId(std::int64_t id, const char* context) {
 		throw JsonGraphReaderError(std::string(context) + ": negative vertex id");
 	}
 	if (id > static_cast<std::int64_t>(
-		    std::numeric_limits<std::int32_t>::max())) {
+		    std::numeric_limits<int32_t>::max())) {
 		throw JsonGraphReaderError(std::string(context)
 					   + ": vertex id too large for int32");
 	}
 }
 
-std::pair<std::int32_t, std::int32_t> parseEdgePair(const nlohmann::json& edge) {
+std::pair<int32_t, int32_t> parseEdgePair(const nlohmann::json& edge) {
 	if (!edge.is_array() || edge.size() != 2) {
 		throw JsonGraphReaderError(
 			"readGraphByName: each edge must be a pair [u, v]");
@@ -76,10 +76,10 @@ std::pair<std::int32_t, std::int32_t> parseEdgePair(const nlohmann::json& edge) 
 	const std::int64_t v0 = jsonIntegerValue(edge[1]);
 	ensureInt32VertexId(u0, "readGraphByName: edge");
 	ensureInt32VertexId(v0, "readGraphByName: edge");
-	return {static_cast<std::int32_t>(u0), static_cast<std::int32_t>(v0)};
+	return {static_cast<int32_t>(u0), static_cast<int32_t>(v0)};
 }
 
-std::int32_t vertexCountFromEntry(const nlohmann::json& entry) {
+int32_t vertexCountFromEntry(const nlohmann::json& entry) {
 	std::int64_t maxId = -1;
 
 	if (entry.contains("nodes")) {
@@ -104,11 +104,11 @@ std::int32_t vertexCountFromEntry(const nlohmann::json& entry) {
 		return 0;
 	}
 	if (maxId == static_cast<std::int64_t>(
-		    std::numeric_limits<std::int32_t>::max())) {
+		    std::numeric_limits<int32_t>::max())) {
 		throw JsonGraphReaderError(
 			"readGraphByName: vertex id range overflow (max int32)");
 	}
-	return static_cast<std::int32_t>(maxId + 1);
+	return static_cast<int32_t>(maxId + 1);
 }
 
 } // namespace
@@ -152,13 +152,13 @@ Graph JsonGraphReader::readGraphByName(const std::string& graphName) const {
 			"readGraphByName: graph entry must contain \"edges\" array");
 	}
 
-	const std::int32_t n = vertexCountFromEntry(*entry);
+	int32_t n = vertexCountFromEntry(*entry);
 	Graph g(n);
 
 	for (const auto& edge : (*entry)["edges"]) {
-		const auto pr = parseEdgePair(edge);
-		const std::int32_t u = pr.first;
-		const std::int32_t v = pr.second;
+		auto pr = parseEdgePair(edge);
+		int32_t u = pr.first;
+		int32_t v = pr.second;
 		if (std::max(u, v) >= n) {
 			throw JsonGraphReaderError(
 				"readGraphByName: edge endpoint out of range for graph");

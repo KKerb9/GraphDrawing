@@ -21,17 +21,16 @@ int main(int argc, char** argv) {
 		Config cfg = parseArgs(argc, argv);
 		
                 JsonGraphReader reader(cfg.datasetPath);
-                auto graph = reader.readGraphByName(cfg.graphName);
+                Graph graph = reader.readGraphByName(cfg.graphName);
 
-                auto space = createSpace(cfg.spaceName, 2);
-                auto proj = createProjection(
-                        cfg.spaceName,
-                        static_cast<std::size_t>(space->dimension())
-                );
+                SpacePtr space = createSpace(cfg.spaceName, 2);
+
+                ProjectionPtr proj = createProjection(cfg.spaceName, space->dimension());
 
                 Embedding emb(graph);
-                ZeroInitialPlacement init;
-                init.computeInitial(emb, *space);
+
+                InitialPlacementStrategyPtr init = createInitialPlacementStrategy(cfg.initialPlacementName);
+                init->computeInitial(emb, *space);
 
                 LayoutAlgorithmPtr algo = createLayoutAlgorithm(cfg.algoName);
                 algo->computeLayout(emb, *space);

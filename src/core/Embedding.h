@@ -35,14 +35,14 @@ public:
         Embedding(Graph& graph);  // найти начальную расстановку
         Embedding(Graph& graph, const std::vector<Coord>& startCoords);
 
-        void setPos(std::int32_t v, const Coord& pos);
-        void setPosMany(const std::vector<std::pair<std::int32_t, Coord>>& data);
+        void setPos(int32_t v, const Coord& pos);
+        void setPosMany(const std::vector<std::pair<int32_t, Coord>>& data);
 
-        const Coord& getCoord(std::int32_t v) const;
+        const Coord& getCoord(int32_t v) const;
 
-        std::int32_t size() const;
+        int32_t size() const;
 
-        std::int32_t dimension() const;
+        int32_t dimension() const;
 
         const std::vector<Coord>& getCoords() const;
 
@@ -50,7 +50,7 @@ public:
 
 private:
         Graph& _graph;
-        std::int32_t curDim;
+        int32_t curDim;
         std::vector<Coord> _coords;
 };
 

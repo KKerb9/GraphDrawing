@@ -2,14 +2,14 @@
 
 namespace gd {
 
-IdentityProjection::IdentityProjection(std::int32_t dim) : _dim(dim), _name("identity") {}
+IdentityProjection::IdentityProjection(int32_t dim) : _dim(dim), _name("identity") {}
 
 std::string IdentityProjection::name() const {
         return _name;
 }
 
 Vec2 IdentityProjection::project2D(const Coord& c) const {
-        if (static_cast<std::int32_t>(c.size()) < 2) {
+        if (static_cast<int32_t>(c.size()) < 2) {
                 throw ProjectionError("IdentityProjection::project2D: not enough coordinates");
         }
         return Vec2{c[0], c[1]};
@@ -22,7 +22,7 @@ Vec3 IdentityProjection::project3D(const Coord& c) const {
         return Vec3{c[0], c[1], c[2]};
 }
 
-std::unique_ptr<Projection> createProjection(const std::string& spaceName, std::int32_t dim) {
+ProjectionPtr createProjection(const std::string& spaceName, int32_t dim) {
         if (spaceName == "euclidean") {
                 return std::make_unique<IdentityProjection>(dim);
         }
