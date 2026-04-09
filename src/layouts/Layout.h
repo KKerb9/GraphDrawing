@@ -1,8 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "../core/template.h"
 #include "../core/Embedding.h"
 #include "../core/Errors.h"
 #include "../spaces/Space.h"
@@ -16,16 +19,19 @@ public:
 
 class LayoutAlgorithm {
 public:
-        explicit LayoutAlgorithm(const std::string& name);
+	explicit LayoutAlgorithm(std::string name);
 
-        virtual ~LayoutAlgorithm() = default;
+	virtual ~LayoutAlgorithm() = default;
 
-        std::string name() const;
+	std::string name() const;
 
-        virtual void computeLayout(Embedding& emb, const Space& space) const = 0;
+	virtual void computeLayout(
+		Embedding& emb,
+		const Space& space,
+		const std::vector<int32_t>& figSize) const = 0;
 
-private:
-        std::string _name;
+protected:
+	std::string _name;
 };
 
 using LayoutAlgorithmPtr = std::unique_ptr<LayoutAlgorithm>;
@@ -33,4 +39,3 @@ using LayoutAlgorithmPtr = std::unique_ptr<LayoutAlgorithm>;
 LayoutAlgorithmPtr createLayoutAlgorithm(const std::string& name);
 
 } // namespace gd
-

@@ -23,17 +23,17 @@ int main(int argc, char** argv) {
                 JsonGraphReader reader(cfg.datasetPath);
                 Graph graph = reader.readGraphByName(cfg.graphName);
 
-                SpacePtr space = createSpace(cfg.spaceName, 2);
+                SpacePtr space = createSpace(cfg.spaceName, cfg.dimension);
 
                 ProjectionPtr proj = createProjection(cfg.spaceName, space->dimension());
 
-                Embedding emb(graph);
+                Embedding emb(graph, cfg.dimension);
 
                 InitialPlacementStrategyPtr init = createInitialPlacementStrategy(cfg.initialPlacementName);
-                init->computeInitial(emb, *space);
+                init->computeInitial(emb, *space, cfg.figSize);
 
                 LayoutAlgorithmPtr algo = createLayoutAlgorithm(cfg.algoName);
-                algo->computeLayout(emb, *space);
+                algo->computeLayout(emb, *space, cfg.figSize);
 
                 MetricsCalculator mc;
                 Metrics m = mc.compute(emb, *space);

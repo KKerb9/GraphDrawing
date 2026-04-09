@@ -19,9 +19,9 @@ public:
 
 	virtual std::string name() const = 0;
 
-	virtual Vec2 project2D(const Coord& c) const = 0;
+	virtual Vec2 project2D(const Pt& c) const = 0;
 
-	virtual Vec3 project3D(const Coord& c) const = 0;
+	virtual Vec3 project3D(const Pt& c) const = 0;
 };
 
 class IdentityProjection : public Projection {
@@ -30,9 +30,9 @@ public:
 
         std::string name() const override;
 
-	Vec2 project2D(const Coord& c) const override;
+	Vec2 project2D(const Pt& c) const override;
 
-	Vec3 project3D(const Coord& c) const override;
+	Vec3 project3D(const Pt& c) const override;
 
 private:
         int32_t _dim;

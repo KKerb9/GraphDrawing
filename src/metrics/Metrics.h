@@ -12,8 +12,8 @@ public:
 };
 
 struct Metrics {
-        double stress{0.0};
-        double edgeLengthVariance{0.0};
+        ld stress{0.0};
+        ld edgeLengthVariance{0.0};
 };
 
 class MetricsCalculator {
