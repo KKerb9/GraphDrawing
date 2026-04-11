@@ -22,7 +22,7 @@ struct Config {
 	std::string projectionName;
 	std::string datasetPath;
 	std::string outputPath;
-	int dimension = 2;
+	int32_t dimension = 2;
 	std::vector<int32_t> figSize;
 
 	bool isValid() const;

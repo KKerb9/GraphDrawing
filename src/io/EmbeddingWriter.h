@@ -2,9 +2,9 @@
 
 #include <string>
 
+#include "Config.h"
 #include "../core/Embedding.h"
 #include "../core/Errors.h"
-#include "../projections/Projection.h"
 #include "../metrics/Metrics.h"
 
 namespace gd {
@@ -15,14 +15,9 @@ public:
 };
 
 void writeEmbeddingJson(
-        const std::string& outputPath,
-        const std::string& graphName,
-        const std::string& algoName,
-        const std::string& spaceName,
-        const std::string& initialPlacementName,
-        const Projection& proj,
-        const Embedding& emb,
-        const Metrics& metrics);
+	const Config& cfg,
+	const Embedding& result,
+	const Metrics& metrics);
         
 } // namespace gd
 

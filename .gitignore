@@ -21,3 +21,4 @@ build_asan
 .DS_Store
 .cache/
 .venv/
+artist.dSYM/

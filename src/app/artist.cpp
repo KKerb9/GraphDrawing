@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
                 SpacePtr space = createSpace(cfg.spaceName, cfg.dimension);
 
-                ProjectionPtr proj = createProjection(cfg.spaceName, space->dimension());
+                ProjectionPtr proj = createProjection(cfg.projectionName);
 
                 Embedding emb(graph, cfg.dimension);
 
@@ -35,18 +35,14 @@ int main(int argc, char** argv) {
                 LayoutAlgorithmPtr algo = createLayoutAlgorithm(cfg.algoName);
                 algo->computeLayout(emb, *space, cfg.figSize);
 
-                MetricsCalculator mc;
-                Metrics m = mc.compute(emb, *space);
+                Embedding result = proj->project(emb, space, cfg.dimension);
+
+                Metrics metrics = computeMetrics(result, *space, cfg.figSize);
 
                 writeEmbeddingJson(
-                        cfg.outputPath,
-                        cfg.graphName,
-                        cfg.algoName,
-                        cfg.spaceName,
-                        cfg.initialPlacementName,
-                        *proj,
-                        emb,
-                        m
+                        cfg,
+                        result,
+                        metrics
                 );
                 
 		return 0;

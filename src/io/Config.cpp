@@ -11,7 +11,7 @@ namespace gd {
 const std::vector<std::string> ALGO_NAMES = {"random", "far"};
 const std::vector<std::string> SPACE_NAMES = {"euclidean", "hyperbolic", "spherical"};
 const std::vector<std::string> INITIAL_PLACEMENT_NAMES = {"zero", "random"};
-const std::vector<std::string> PROJECTION_NAMES = {"euclidean", "hyperbolic", "spherical"};
+const std::vector<std::string> PROJECTION_NAMES = {"identity", "orthogonal"};
 
 bool contains(const std::vector<std::string>& list, const std::string& s) {
 	for (const auto& x : list) {
@@ -34,7 +34,7 @@ void printHelp() {
 	std::cerr << "; default: zero)\n";
 	std::cerr << "\t--projection <name> (";
 	for (const auto& n : PROJECTION_NAMES) std::cerr << n << ", ";
-	std::cerr << "; default: euclidean)\n";
+	std::cerr << "; default: identity)\n";
 	std::cerr << "\t--dim <2|3> (default: 2); put before --FS if dimension is not 2\n";
 	std::cerr << "\t--FS <n1,n2,...> figure size: exactly <dimension> integers (default: 100 each)\n";
 	std::cerr << "\t--dataset <path> (default: samples/dataset.json)\n";
@@ -130,7 +130,7 @@ Config parseArgs(int argc, char** argv) {
 		cfg.initialPlacementName = "zero";
 	}
 	if (cfg.projectionName.empty()) {
-		cfg.projectionName = "euclidean";
+		cfg.projectionName = "identity";
 	}
 	if (cfg.datasetPath.empty()) {
 		cfg.datasetPath = "samples/dataset.json";

@@ -18,12 +18,11 @@ ld EuclideanSpace::dist(const Pt& a, const Pt& b) const {
         // if (!EuclideanSpace::isValid(a) || !EuclideanSpace::isValid(b)) {
         //         throw SpaceError("EuclideanSpace::distance: dimension mismatch");
         // }
-        ld sum = 0.0;
+        ld summ = 0.0;
         for (int32_t i = 0; i < _dim; i++) {
-            ld d = a[i] - b[i];
-            sum += d * d;
+            summ += (a[i] - b[i]) * (a[i] - b[i]);
         }
-        return std::sqrt(sum);
+        return std::sqrt(summ);
 }
 
 bool EuclideanSpace::isValid(const Pt& c) const {
@@ -32,11 +31,11 @@ bool EuclideanSpace::isValid(const Pt& c) const {
 }
 
 ld EuclideanSpace::norm(const Pt& vec) const {
-        ld sum = 0.0;
+        ld summ = 0.0;
         for (const ld x : vec) {
-                sum += x * x;
+                summ += x * x;
         }
-        return std::sqrtl(sum);
+        return std::sqrtl(summ);
 }
 
 ll EuclideanSpace::area(const std::vector<int32_t>& size) const {

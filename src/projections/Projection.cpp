@@ -1,32 +1,55 @@
 #include "Projection.h"
 
+#include <vector>
+
 namespace gd {
 
-IdentityProjection::IdentityProjection(int32_t dim) : _dim(dim), _name("identity") {}
+IdentityProjection::IdentityProjection() : _name("identity") {}
 
 std::string IdentityProjection::name() const {
-        return _name;
+	return _name;
 }
 
-Vec2 IdentityProjection::project2D(const Pt& c) const {
-        if (static_cast<int32_t>(c.size()) < 2) {
-                throw ProjectionError("IdentityProjection::project2D: not enough coordinates");
-        }
-        return Vec2{c[0], c[1]};
+Embedding IdentityProjection::project(const Embedding& emb, const Space& space, int32_t finalDim) const {
+	if (finalDim != emb.dimension()) {
+		throw ProjectionError("IdentityProjection::project: final dimension != embedding dimension");
+	}
+	return Embedding(emb.getGraph(), emb.getCoords());
 }
 
-Vec3 IdentityProjection::project3D(const Pt& c) const {
-        if (c.size() < 3) {
-                throw ProjectionError("IdentityProjection::project3D: not enough coordinates");
-        }
-        return Vec3{c[0], c[1], c[2]};
+OrthogonalProjection::OrthogonalProjection() : _name("orthogonal") {}
+
+std::string OrthogonalProjection::name() const {
+	return _name;
 }
 
-ProjectionPtr createProjection(const std::string& spaceName, int32_t dim) {
-        if (spaceName == "euclidean") {
-                return std::make_unique<IdentityProjection>(dim);
-        }
-        throw ProjectionError("createProjection: unknown space name: " + spaceName);
+Embedding OrthogonalProjection::project(const Embedding& emb, const Space& space, int32_t finalDim) const {
+	if (space.name() != "euclidean") {
+		throw ProjectionError("OrthogonalProjection::project: only Euclidean space is supported");
+	}
+	if (finalDim > emb.dimension()) {
+		throw ProjectionError("OrthogonalProjection::project: final dimension > embedding dimension");
+	}
+	if (finalDim == emb.dimension()) {
+		return Embedding(emb.getGraph(), emb.getCoords());
+	}
+
+	std::vector<Pt> res(emb.size());
+	for (int32_t i = 0; i < emb.size(); i++) {
+		const Pt& coord = emb.getCoord(i);
+                res[i] = Pt(coord.begin(), coord.begin() + finalDim);
+	}
+	return Embedding(emb.getGraph(), res);
+}
+
+ProjectionPtr createProjection(const std::string& projName) {
+	if (projName == "identity") {
+		return std::make_unique<IdentityProjection>();
+	}
+	if (projName == "orthogonal") {
+		return std::make_unique<OrthogonalProjection>();
+	}
+	throw ProjectionError("createProjection: unknown projection name: " + projName);
 }
 
 } // namespace gd
