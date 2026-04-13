@@ -15,9 +15,7 @@ int32_t EuclideanSpace::dimension() const noexcept {
 }
 
 ld EuclideanSpace::dist(const Pt& a, const Pt& b) const {
-        // if (!EuclideanSpace::isValid(a) || !EuclideanSpace::isValid(b)) {
-        //         throw SpaceError("EuclideanSpace::distance: dimension mismatch");
-        // }
+        if (!isValid(a) || !isValid(b)) throw SpaceError("dist: size != dim");
         ld summ = 0.0;
         for (int32_t i = 0; i < _dim; i++) {
             summ += (a[i] - b[i]) * (a[i] - b[i]);
@@ -31,6 +29,7 @@ bool EuclideanSpace::isValid(const Pt& c) const {
 }
 
 ld EuclideanSpace::norm(const Pt& vec) const {
+        if (!isValid(vec)) throw SpaceError("norm: size != dim");
         ld summ = 0.0;
         for (const ld x : vec) {
                 summ += x * x;

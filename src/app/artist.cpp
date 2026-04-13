@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
                 LayoutAlgorithmPtr algo = createLayoutAlgorithm(cfg.algoName);
                 algo->computeLayout(emb, *space, cfg.figSize);
 
-                Embedding result = proj->project(emb, space, cfg.dimension);
+                Embedding result = proj->project(emb, *space, cfg.dimension);
 
                 Metrics metrics = computeMetrics(result, *space, cfg.figSize);
 

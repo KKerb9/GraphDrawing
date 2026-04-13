@@ -2,18 +2,18 @@
 
 namespace gd {
 
-Embedding::Embedding(Graph& graph) : _graph(graph), curDim(0) {
+Embedding::Embedding(const Graph& graph) : _graph(graph), curDim(0) {
         _coords.resize(graph.vertexCount());
 }
 
-Embedding::Embedding(Graph& graph, int32_t dim) : _graph(graph), curDim(dim) {
+Embedding::Embedding(const Graph& graph, int32_t dim) : _graph(graph), curDim(dim) {
         _coords.resize(graph.vertexCount());
 }
 
-Embedding::Embedding(Graph& graph, const std::vector<Pt>& startCoords)
+Embedding::Embedding(const Graph& graph, const std::vector<Pt>& startCoords)
         : _graph(graph), curDim(static_cast<int32_t>(startCoords[0].size())) {
         if (static_cast<int32_t>(startCoords.size()) != graph.vertexCount()) {
-                throw EmbeddingError("startCoords: wrong size");
+                throw EmbeddingError("createEmbedding: wrong startCoords size");
         }
         _coords = startCoords;
 }

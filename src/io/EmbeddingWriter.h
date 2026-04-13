@@ -14,10 +14,7 @@ public:
 	using GraphDrawingError::GraphDrawingError;
 };
 
-void writeEmbeddingJson(
-	const Config& cfg,
-	const Embedding& result,
-	const Metrics& metrics);
+void writeEmbeddingJson(const Config& cfg, const Embedding& res, const Metrics& metrics);
         
 } // namespace gd
 

@@ -20,9 +20,9 @@ class Embedding {
         friend class ZeroInitialPlacement;
 public:
         // Embedding() = default;
-        Embedding(Graph& graph);  // найти начальную расстановку
-        Embedding(Graph& graph, int32_t dim);
-        Embedding(Graph& graph, const std::vector<Pt>& startCoords);
+        Embedding(const Graph& graph);  // найти начальную расстановку
+        Embedding(const Graph& graph, int32_t dim);
+        Embedding(const Graph& graph, const std::vector<Pt>& startCoords);
 
         void setPos(int32_t v, const Pt& pos);
         void setPosMany(const std::vector<std::pair<int32_t, Pt>>& data);
@@ -39,7 +39,7 @@ public:
 
         const std::vector<std::pair<int32_t, int32_t>>& getEdges() const;
 private:
-        Graph& _graph;
+        const Graph& _graph;
         int32_t curDim;
         std::vector<Pt> _coords;
 };

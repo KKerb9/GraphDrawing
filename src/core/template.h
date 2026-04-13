@@ -71,41 +71,6 @@ private:
 	ld EPS;
 };
 
-struct Vec2 {
-	ld x;
-	ld y;
-
-	Vec2(ld x, ld y) : x(x), y(y) {}
-};
-
-inline std::istream& operator>>(std::istream& in, Vec2& x) {
-	in >> x.x >> x.y;
-	return in;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Vec2& x) {
-	out << x.x << ' ' << x.y;
-	return out;
-}
-
-struct Vec3 {
-	ld x;
-	ld y;
-	ld z;
-
-	Vec3(ld x, ld y, ld z) : x(x), y(y), z(z) {}
-};
-
-inline std::istream& operator>>(std::istream& in, Vec3& x) {
-	in >> x.x >> x.y >> x.z;
-	return in;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const Vec3& x) {
-	out << x.x << ' ' << x.y << ' ' << x.z;
-	return out;
-}
-
 using Pt = std::vector<ld>;
 
 inline std::ostream& operator<<(std::ostream& out, const Pt& x) {
