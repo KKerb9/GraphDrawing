@@ -119,7 +119,7 @@ def parse_args():
                 "--output",
                 default=None,
                 metavar="PNG",
-                help="output PNG (default: <dir of JSON>/<graph_name>_<algo>.png)",
+                help='output PNG (default: same directory as JSON, name "<input_basename>.png")',
         )
         return parser.parse_args()
 
@@ -164,7 +164,8 @@ def main():
                 output_path = args.output
         else:
                 base_dir = os.path.dirname(args.input)
-                filename = graph_name + "_" + algo_name + ".png"
+                stem = os.path.splitext(os.path.basename(args.input))[0]
+                filename = stem + ".png"
                 output_path = os.path.join(base_dir if base_dir else ".", filename)
 
         title = graph_name + " (" + algo_name + ")"

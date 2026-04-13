@@ -23,30 +23,26 @@ int main(int argc, char** argv) {
                 JsonGraphReader reader(cfg.datasetPath);
                 Graph graph = reader.readGraphByName(cfg.graphName);
 
-                SpacePtr space = createSpace(cfg.spaceName, 2);
+                SpacePtr space = createSpace(cfg.spaceName, cfg.dimension);
 
-                ProjectionPtr proj = createProjection(cfg.spaceName, space->dimension());
+                ProjectionPtr proj = createProjection(cfg.projectionName);
 
-                Embedding emb(graph);
+                Embedding emb(graph, cfg.dimension);
 
                 InitialPlacementStrategyPtr init = createInitialPlacementStrategy(cfg.initialPlacementName);
-                init->computeInitial(emb, *space);
+                init->computeInitial(emb, *space, cfg.figSize);
 
                 LayoutAlgorithmPtr algo = createLayoutAlgorithm(cfg.algoName);
-                algo->computeLayout(emb, *space);
+                algo->computeLayout(emb, *space, cfg.figSize);
 
-                MetricsCalculator mc;
-                Metrics m = mc.compute(emb, *space);
+                Embedding result = proj->project(emb, *space, cfg.dimension);
+
+                Metrics metrics = computeMetrics(result, *space, cfg.figSize);
 
                 writeEmbeddingJson(
-                        cfg.outputPath,
-                        cfg.graphName,
-                        cfg.algoName,
-                        cfg.spaceName,
-                        cfg.initialPlacementName,
-                        *proj,
-                        emb,
-                        m
+                        cfg,
+                        result,
+                        metrics
                 );
                 
 		return 0;

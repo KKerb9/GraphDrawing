@@ -3,23 +3,11 @@
 #include <cstddef>
 #include <vector>
 
+#include "template.h"
 #include "Errors.h"
 #include "Graph.h"
 
 namespace gd {
-
-using Coord = std::vector<double>;
-
-struct Vec2 {
-        double x;
-        double y;
-};
-
-struct Vec3 {
-        double x;
-        double y;
-        double z;
-};
 
 class EmbeddingError : public GraphDrawingError {
 public:
@@ -32,26 +20,28 @@ class Embedding {
         friend class ZeroInitialPlacement;
 public:
         // Embedding() = default;
-        Embedding(Graph& graph);  // найти начальную расстановку
-        Embedding(Graph& graph, const std::vector<Coord>& startCoords);
+        Embedding(const Graph& graph);  // найти начальную расстановку
+        Embedding(const Graph& graph, int32_t dim);
+        Embedding(const Graph& graph, const std::vector<Pt>& startCoords);
 
-        void setPos(int32_t v, const Coord& pos);
-        void setPosMany(const std::vector<std::pair<int32_t, Coord>>& data);
+        void setPos(int32_t v, const Pt& pos);
+        void setPosMany(const std::vector<std::pair<int32_t, Pt>>& data);
 
-        const Coord& getCoord(int32_t v) const;
+        const Pt& getCoord(int32_t v) const;
 
         int32_t size() const;
 
         int32_t dimension() const;
 
-        const std::vector<Coord>& getCoords() const;
+        const std::vector<Pt>& getCoords() const;
 
         const Graph& getGraph() const;
 
+        const std::vector<std::pair<int32_t, int32_t>>& getEdges() const;
 private:
-        Graph& _graph;
+        const Graph& _graph;
         int32_t curDim;
-        std::vector<Coord> _coords;
+        std::vector<Pt> _coords;
 };
 
 } // namespace gd

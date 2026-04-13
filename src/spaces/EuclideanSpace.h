@@ -12,9 +12,13 @@ public:
 
         int32_t dimension() const noexcept override;
 
-        double dist(const Coord& a, const Coord& b) const override;
+        ld dist(const Pt& a, const Pt& b) const override;
 
-        bool isValid(const Coord& c) const override;
+        ld norm(const Pt& vec) const override;
+
+        ll area(const std::vector<int32_t>& size) const override;
+
+        bool isValid(const Pt& c) const override;
 
 private:
         int32_t _dim;

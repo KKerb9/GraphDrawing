@@ -5,6 +5,7 @@
 
 #include "../core/Embedding.h"
 #include "../core/Errors.h"
+#include "../spaces/Space.h"
 
 namespace gd {
 
@@ -19,29 +20,36 @@ public:
 
 	virtual std::string name() const = 0;
 
-	virtual Vec2 project2D(const Coord& c) const = 0;
-
-	virtual Vec3 project3D(const Coord& c) const = 0;
+	virtual Embedding project(const Embedding& emb, const Space& space, int32_t finalDim) const = 0;
 };
 
 class IdentityProjection : public Projection {
 public:
-        explicit IdentityProjection(int32_t dim);
+	explicit IdentityProjection();
 
-        std::string name() const override;
+	std::string name() const override;
 
-	Vec2 project2D(const Coord& c) const override;
-
-	Vec3 project3D(const Coord& c) const override;
+	Embedding project(const Embedding& emb, const Space& space, int32_t finalDim) const override;
 
 private:
-        int32_t _dim;
-        std::string _name;
+	std::string _name;
+};
+
+class OrthogonalProjection : public Projection {
+public:
+	explicit OrthogonalProjection();
+
+	std::string name() const override;
+
+	Embedding project(const Embedding& emb, const Space& space, int32_t finalDim) const override;
+
+private:
+	std::string _name;
 };
 
 using ProjectionPtr = std::unique_ptr<Projection>;
 
-ProjectionPtr createProjection(const std::string& spaceName, int32_t dim);
+ProjectionPtr createProjection(const std::string& projName);
 
 } // namespace gd
 

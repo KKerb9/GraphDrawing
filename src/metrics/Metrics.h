@@ -1,8 +1,12 @@
 #pragma once
 
-#include "../core/Embedding.h"
+#include <cstdint>
+#include <vector>
+
 #include "../core/Errors.h"
+#include "../core/template.h"
 #include "../spaces/Space.h"
+#include "../core/Embedding.h"
 
 namespace gd {
 
@@ -12,14 +16,16 @@ public:
 };
 
 struct Metrics {
-        double stress{0.0};
-        double edgeLengthVariance{0.0};
+	ld volume;
+	ld minVertexDist;
+	ld maxVertexDist;
+	ld avgVertexDist;
+	int32_t edgeCrossings;
+	ld minAngle;
+	ld maxAngle;
+	ld density;
 };
 
-class MetricsCalculator {
-public:
-        Metrics compute(const Embedding& emb, const Space& space) const;
-};
+Metrics computeMetrics(const Embedding& emb, const Space& space, const std::vector<int32_t>& figSize);
 
 } // namespace gd
-

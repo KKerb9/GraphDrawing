@@ -1,0 +1,36 @@
+{
+  "graph_name": "SmallGraph",
+  "algo": "random",
+  "space": "euclidean",
+  "initial_placement": "zero",
+  "projection": "identity",
+  "dimension": 2,
+  "nodes": [
+    {"id": 0, "x": -30.310737, "y": -8.668387},
+    {"id": 1, "x": 45.955536, "y": 41.746541},
+    {"id": 2, "x": -41.701283, "y": -13.279324},
+    {"id": 3, "x": 49.069710, "y": -2.855757},
+    {"id": 4, "x": 38.853158, "y": 42.379565}
+  ],
+  "edges": [
+    [0, 1],
+    [0, 2],
+    [0, 3],
+    [1, 2],
+    [1, 3],
+    [1, 4],
+    [2, 3],
+    [2, 4],
+    [3, 4]
+  ],
+  "metrics": {
+    "volume": 5052.212606,
+    "minVertexDist": 7.130532,
+    "maxVertexDist": 103.496685,
+    "avgVertexDist": 66.026025,
+    "edgeCrossings": 2,
+    "minAngle": 0.023527,
+    "maxAngle": 2.942137,
+    "density": 0.000000
+  }
+}

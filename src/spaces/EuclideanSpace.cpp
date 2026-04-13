@@ -14,21 +14,35 @@ int32_t EuclideanSpace::dimension() const noexcept {
         return _dim;
 }
 
-double EuclideanSpace::dist(const Coord& a, const Coord& b) const {
-        // if (!EuclideanSpace::isValid(a) || !EuclideanSpace::isValid(b)) {
-        //         throw SpaceError("EuclideanSpace::distance: dimension mismatch");
-        // }
-        double sum = 0.0;
+ld EuclideanSpace::dist(const Pt& a, const Pt& b) const {
+        if (!isValid(a) || !isValid(b)) throw SpaceError("dist: size != dim");
+        ld summ = 0.0;
         for (int32_t i = 0; i < _dim; i++) {
-            double d = a[i] - b[i];
-            sum += d * d;
+            summ += (a[i] - b[i]) * (a[i] - b[i]);
         }
-        return std::sqrt(sum);
+        return std::sqrt(summ);
 }
 
-bool EuclideanSpace::isValid(const Coord& c) const {
+bool EuclideanSpace::isValid(const Pt& c) const {
         return static_cast<int32_t>(c.size()) == _dim;
         // throw SpaceError("coordinate dimension mismatch");
+}
+
+ld EuclideanSpace::norm(const Pt& vec) const {
+        if (!isValid(vec)) throw SpaceError("norm: size != dim");
+        ld summ = 0.0;
+        for (const ld x : vec) {
+                summ += x * x;
+        }
+        return std::sqrtl(summ);
+}
+
+ll EuclideanSpace::area(const std::vector<int32_t>& size) const {
+        ll res = 1;
+        for (const auto x : size) {
+                res *= x;
+        }
+        return res;
 }
 
 } // namespace gd
