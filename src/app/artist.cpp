@@ -17,6 +17,7 @@
 using namespace gd;
 
 int main(int argc, char** argv) {
+        std::cerr << "START\n";
 	try {
 		Config cfg = parseArgs(argc, argv);
 		

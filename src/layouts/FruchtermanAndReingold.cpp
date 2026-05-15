@@ -1,23 +1,27 @@
 #include "FruchtermanAndReingold.h"
 
 #include <algorithm>
-#include <cassert>
 
 namespace gd {
 
-FruchtermanAndReingoldLayout::FruchtermanAndReingoldLayout(int32_t ITERS, ld C)
-	: LayoutAlgorithm("far"),
-	  ITERS(ITERS),
-	  C(C) {}
+FruchtermanAndReingoldLayout::FruchtermanAndReingoldLayout() : LayoutAlgorithm("far") {
+        ITERS = 100;
+        C = 1.0;
+}
+
+FruchtermanAndReingoldLayout::FruchtermanAndReingoldLayout(int32_t ITERS, ld C) : LayoutAlgorithm("far") {
+        this->ITERS = ITERS;
+        this->C = C;
+}
 
 void FruchtermanAndReingoldLayout::computeLayout(
-		Embedding& emb,
-		const Space& space,
-		const std::vector<int32_t>& figSize) const {
+        Embedding& emb,
+        const Space& space,
+        const std::vector<int32_t>& figSize) const {
 
         const ld EPS = 1e-12;
         Comparator cmp(EPS);
-        
+
         ll area = space.area(figSize);
         int n = emb.size();
         int dim = space.dimension();
