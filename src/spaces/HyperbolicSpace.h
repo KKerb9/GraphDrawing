@@ -1,12 +1,16 @@
+/*
+Lorentzian space
+*/
+
 #pragma once
 
 #include "Space.h"
 
 namespace gd {
 
-class EuclideanSpace : public Space {
+class HyperbolicSpace : public Space {
 public:
-        explicit EuclideanSpace(int32_t dim);
+        explicit HyperbolicSpace(int32_t dim);
 
         std::string name() const override;
 
@@ -29,6 +33,13 @@ public:
         bool areGeodesicSegmentsCrossing(const Pt& a, const Pt& b, const Pt& c, const Pt& d) const override;
 
         bool isValid(const Pt& c) const override;
+
+        Pt lift(const Pt& x) const;
+
+        Pt tangentToDefault(const Pt& at, const Pt& tangent) const;
+        Pt defaultToTangent(const Pt& def) const;
+
+        ld lorentzProd(const Pt& a, const Pt& b) const;
 
 private:
         int32_t _dim;

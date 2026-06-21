@@ -14,7 +14,7 @@ public:
 	void computeLayout(
 		Embedding& emb,
 		const Space& space,
-		const std::vector<int32_t>& figSize) const override;
+		const BorderPolicy& borderPolicy) const override;
 };
 
 } // namespace gd

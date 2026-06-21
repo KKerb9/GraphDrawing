@@ -15,8 +15,20 @@ public:
         void computeLayout(
 		Embedding& emb,
 		const Space& space,
-		const std::vector<int32_t>& figSize
+		const BorderPolicy& borderPolicy
 	) const override;
+
+        void computeLayoutTest(
+                Embedding& emb,
+                const Space& space,
+                const BorderPolicy& borderPolicy
+        ) const;
+
+        void computeLayoutEuclideanOld(
+                Embedding& emb,
+                const Space& space,
+                const std::vector<int32_t>& figSize
+        ) const;
 private:
 	int32_t ITERS;
 	ld C;

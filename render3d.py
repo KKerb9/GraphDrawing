@@ -82,7 +82,16 @@ def build_graph_3d(result, dataset_path):
         return g, pos
 
 
-def draw_graph_3d(g, pos, output_path, title=None):
+def get_fig_size(result, dim):
+        fig_size = result.get("fig_size")
+        if fig_size is None:
+                return None
+        if len(fig_size) != dim:
+                raise ValueError("fig_size length must be " + str(dim))
+        return [float(x) for x in fig_size]
+
+
+def draw_graph_3d(g, pos, output_path, title=None, fig_size=None):
         fig = plt.figure(figsize=(7, 6))
         ax = fig.add_subplot(111, projection="3d")
 
@@ -116,14 +125,22 @@ def draw_graph_3d(g, pos, output_path, title=None):
         ax.set_ylabel("y")
         ax.set_zlabel("z")
 
+        if fig_size is not None:
+                ax.set_xlim(-fig_size[0] / 2.0, fig_size[0] / 2.0)
+                ax.set_ylim(-fig_size[1] / 2.0, fig_size[1] / 2.0)
+                ax.set_zlim(-fig_size[2] / 2.0, fig_size[2] / 2.0)
+
         try:
-                ax.set_box_aspect(
-                        [
-                                max(xs) - min(xs) if len(xs) > 1 else 1.0,
-                                max(ys) - min(ys) if len(ys) > 1 else 1.0,
-                                max(zs) - min(zs) if len(zs) > 1 else 1.0,
-                        ]
-                )
+                if fig_size is not None:
+                        ax.set_box_aspect(fig_size)
+                else:
+                        ax.set_box_aspect(
+                                [
+                                        max(xs) - min(xs) if len(xs) > 1 else 1.0,
+                                        max(ys) - min(ys) if len(ys) > 1 else 1.0,
+                                        max(zs) - min(zs) if len(zs) > 1 else 1.0,
+                                ]
+                        )
         except AttributeError:
                 pass
 
@@ -196,6 +213,7 @@ def main():
 
         try:
                 g, pos = build_graph_3d(result, dataset_path)
+                fig_size = get_fig_size(result, 3)
         except ValueError as e:
                 print("error: " + str(e))
                 return 1
@@ -208,7 +226,7 @@ def main():
                 output_path = os.path.join(base_dir if base_dir else ".", filename)
 
         title = graph_name + " (" + algo_name + ") — 3D"
-        draw_graph_3d(g, pos, output_path, title)
+        draw_graph_3d(g, pos, output_path, title, fig_size)
 
         print("saved PNG to " + output_path)
 

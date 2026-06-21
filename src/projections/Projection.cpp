@@ -1,45 +1,66 @@
 #include "Projection.h"
 
+#include "IdentityProjection.h"
+#include "OrthogonalProjection.h"
+#include "PoincareProjection.h"
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <vector>
 
 namespace gd {
 
-IdentityProjection::IdentityProjection() : _name("identity") {}
-
-std::string IdentityProjection::name() const {
-	return _name;
-}
-
-Embedding IdentityProjection::project(const Embedding& emb, const Space& space, int32_t finalDim) const {
-	if (finalDim != emb.dimension()) {
-		throw ProjectionError("IdentityProjection::project: final dimension != embedding dimension");
+std::vector<Pt> Projection::fitToFigSize(
+		const std::vector<Pt>& coords,
+		const std::vector<int32_t>& figSize,
+		int32_t finalDim) {
+	if (finalDim <= 0) {
+		throw ProjectionError("fitToFigSize: final dimension must be positive");
 	}
-	return Embedding(emb.getGraph(), emb.getCoords());
-}
-
-OrthogonalProjection::OrthogonalProjection() : _name("orthogonal") {}
-
-std::string OrthogonalProjection::name() const {
-	return _name;
-}
-
-Embedding OrthogonalProjection::project(const Embedding& emb, const Space& space, int32_t finalDim) const {
-	if (space.name() != "euclidean") {
-		throw ProjectionError("OrthogonalProjection::project: only Euclidean space is supported");
+	if (static_cast<int32_t>(figSize.size()) != finalDim) {
+		throw ProjectionError("fitToFigSize: figSize size != final dimension");
 	}
-	if (finalDim > emb.dimension()) {
-		throw ProjectionError("OrthogonalProjection::project: final dimension > embedding dimension");
+	for (const int32_t side : figSize) {
+		if (side <= 0) {
+			throw ProjectionError("fitToFigSize: figSize side must be positive");
+		}
 	}
-	if (finalDim == emb.dimension()) {
-		return Embedding(emb.getGraph(), emb.getCoords());
+	if (coords.empty()) {
+		return coords;
 	}
 
-	std::vector<Pt> res(emb.size());
-	for (int32_t i = 0; i < emb.size(); i++) {
-		const Pt& coord = emb.getCoord(i);
-                res[i] = Pt(coord.begin(), coord.begin() + finalDim);
+	Pt mns(finalDim, std::numeric_limits<ld>::infinity());
+	Pt mxs(finalDim, -std::numeric_limits<ld>::infinity());
+	for (const Pt& p : coords) {
+		if (static_cast<int32_t>(p.size()) != finalDim) {
+			throw ProjectionError("fitToFigSize: coordinate dimension mismatch");
+		}
+		for (int32_t i = 0; i < finalDim; i++) {
+			if (!std::isfinite(p[i])) {
+				throw ProjectionError("fitToFigSize: coordinate must be finite");
+			}
+			mns[i] = std::min(mns[i], p[i]);
+			mxs[i] = std::max(mxs[i], p[i]);
+		}
 	}
-	return Embedding(emb.getGraph(), res);
+
+	ld scale = std::numeric_limits<ld>::infinity();
+	for (int32_t i = 0; i < finalDim; i++) {
+		ld len = mxs[i] - mns[i];
+		if (len > 0) {
+			scale = std::min(scale, static_cast<ld>(figSize[i]) / len);
+		}
+	}
+	if (!std::isfinite(scale)) {
+		scale = 1;
+	}
+
+	std::vector<Pt> res = coords;
+	for (Pt& p : res) {
+		for (int32_t i = 0; i < finalDim; i++) p[i] = (p[i] - (mns[i] + mxs[i]) / 2) * scale;
+	}
+	return res;
 }
 
 ProjectionPtr createProjection(const std::string& projName) {
@@ -49,8 +70,10 @@ ProjectionPtr createProjection(const std::string& projName) {
 	if (projName == "orthogonal") {
 		return std::make_unique<OrthogonalProjection>();
 	}
+	if (projName == "poincare") {
+		return std::make_unique<PoincareProjection>();
+	}
 	throw ProjectionError("createProjection: unknown projection name: " + projName);
 }
 
 } // namespace gd
-

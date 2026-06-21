@@ -8,6 +8,7 @@
 #include "../core/template.h"
 #include "../core/Embedding.h"
 #include "../core/Errors.h"
+#include "../core/BorderPolicy.h"
 #include "../spaces/Space.h"
 
 namespace gd {
@@ -28,7 +29,7 @@ public:
 	virtual void computeLayout(
 		Embedding& emb,
 		const Space& space,
-		const std::vector<int32_t>& figSize) const = 0;
+		const BorderPolicy& borderPolicy) const = 0;
 
 protected:
 	std::string _name;

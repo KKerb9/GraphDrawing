@@ -1,5 +1,6 @@
 #include "EuclideanSpace.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace gd {
@@ -37,12 +38,60 @@ ld EuclideanSpace::norm(const Pt& vec) const {
         return std::sqrtl(summ);
 }
 
-ll EuclideanSpace::area(const std::vector<int32_t>& size) const {
-        ll res = 1;
-        for (const auto x : size) {
-                res *= x;
+Pt EuclideanSpace::logMap(const Pt& from, const Pt& to) const {
+        if (!isValid(from) || !isValid(to)) throw SpaceError("logMap: size != dim");
+        return to - from;
+}
+
+Pt EuclideanSpace::expMap(const Pt& from, const Pt& tangent) const {
+        if (!isValid(from) || !isValid(tangent)) throw SpaceError("expMap: size != dim");
+        return from + tangent;
+}
+
+ld EuclideanSpace::tangentNorm(const Pt& at, const Pt& tangent) const {
+        if (!isValid(at) || !isValid(tangent)) throw SpaceError("tangentNorm: size != dim");
+        return norm(tangent);
+}
+
+Pt EuclideanSpace::normalizePoint(const Pt& p, const std::vector<int32_t>& figSize) const {
+        if (!isValid(p)) throw SpaceError("normalizePoint: size != dim");
+        if (static_cast<int32_t>(figSize.size()) != _dim) {
+                throw SpaceError("normalizePoint: figSize size != dim");
+        }
+        Pt res = p;
+        for (int32_t i = 0; i < _dim; i++) {
+                res[i] = std::min((ld)figSize[i] / 2, std::max(-(ld)figSize[i] / 2, res[i]));
         }
         return res;
+}
+
+ld EuclideanSpace::volume(const std::vector<int32_t>& figSize) const {
+        if (static_cast<int32_t>(figSize.size()) != _dim) {
+                throw SpaceError("volume: figSize size != dim");
+        }
+        std::vector<std::vector<ld>> gram(_dim, std::vector<ld>(_dim, 0.0L));
+        for (int32_t i = 0; i < _dim; i++) {
+                for (int32_t j = 0; j < _dim; j++) {
+                        gram[i][j] = (i == j) ? (ld)figSize[i] * figSize[i] : 0.0L;
+                }
+        }
+        ld det = Space::determinantBareiss(gram);
+        det = std::max(det, 0.0L);
+        return std::sqrtl(det);
+}
+
+bool EuclideanSpace::areGeodesicSegmentsCrossing(
+                const Pt& a,
+                const Pt& b,
+                const Pt& c,
+                const Pt& d) const {
+        if (_dim != 2) {
+                throw SpaceError("areGeodesicSegmentsCrossing: Euclidean dimension != 2");
+        }
+        if (!isValid(a) || !isValid(b) || !isValid(c) || !isValid(d)) {
+                throw SpaceError("areGeodesicSegmentsCrossing: size != dim");
+        }
+        return areEuclideanSegmentsCrossing2D(a, b, c, d);
 }
 
 } // namespace gd

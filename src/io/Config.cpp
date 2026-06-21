@@ -2,16 +2,21 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <limits>
+#include <random>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include <chrono>
 
 namespace gd {
 
 const std::vector<std::string> ALGO_NAMES = {"random", "far"};
 const std::vector<std::string> SPACE_NAMES = {"euclidean", "hyperbolic", "spherical"};
+const std::vector<std::string> BORDER_POLICY_NAMES = {"default"};
 const std::vector<std::string> INITIAL_PLACEMENT_NAMES = {"zero", "random"};
-const std::vector<std::string> PROJECTION_NAMES = {"identity", "orthogonal"};
+const std::vector<std::string> PROJECTION_NAMES = {"identity", "orthogonal", "poincare"};
 
 bool contains(const std::vector<std::string>& list, const std::string& s) {
 	for (const auto& x : list) {
@@ -29,14 +34,20 @@ void printHelp() {
 	std::cerr << "\t--space <name> (";
 	for (const auto& n : SPACE_NAMES) std::cerr << n << ", ";
 	std::cerr << "; default: euclidean)\n";
+	std::cerr << "\t--borderPolicy <name> (";
+	for (const auto& n : BORDER_POLICY_NAMES) std::cerr << n << ", ";
+	std::cerr << "; default: default; params are read from stdin depending on border policy model)\n";
 	std::cerr << "\t--initial-placement <name> (";
 	for (const auto& n : INITIAL_PLACEMENT_NAMES) std::cerr << n << ", ";
 	std::cerr << "; default: zero)\n";
 	std::cerr << "\t--projection <name> (";
 	for (const auto& n : PROJECTION_NAMES) std::cerr << n << ", ";
-	std::cerr << "; default: identity)\n";
-	std::cerr << "\t--dim <2|3> (default: 2); put before --FS if dimension is not 2\n";
-	std::cerr << "\t--FS <n1,n2,...> figure size: exactly <dimension> integers (default: 100 each)\n";
+	std::cerr << "; default: poincare for H2, otherwise identity or orthogonal)\n";
+	std::cerr << "\t--dim computation dimension (default: 2)\n";
+	std::cerr << "\t--2d final visualization dimension is 2 (default)\n";
+	std::cerr << "\t--3d final visualization dimension is 3\n";
+	std::cerr << "\t--FS <n1,n2,...> result figure size: exactly <final dimension> integers (default: 100 each)\n";
+	std::cerr << "\t--seed <uint32> random seed (default: random)\n";
 	std::cerr << "\t--dataset <path> (default: samples/dataset.json)\n";
 	std::cerr << "\t--output <path> (default: out/<graph>_<algo>.json)\n";
 	std::cerr << "\t--help\n";
@@ -67,17 +78,41 @@ std::vector<int32_t> parseFigSize(std::string s, int32_t dim) {
 	return out;
 }
 
+std::vector<long double> parseBorderSideSizes(const std::string& s, int32_t dim) {
+	std::string data = s;
+	for (char& ch : data) {
+		if (ch == ',') ch = ' ';
+	}
+	std::istringstream ss(data);
+	std::vector<long double> out;
+	long double x = 0.0L;
+	for (int i = 0; i < dim; i++) {
+		if (!(ss >> x)) {
+			throw ConfigError("BorderPolicy: need " + std::to_string(dim) + " side sizes");
+		}
+		out.push_back(x);
+	}
+	std::string extra;
+	if (ss >> extra) {
+		throw ConfigError("BorderPolicy: too many side sizes");
+	}
+	return out;
+}
+
 bool Config::isValid() const {
 	// std::cerr << graphName << ' ' << algoName << ' ' << spaceName << ' ' << initialPlacementName << ' ' << projectionName << '\n';
 	return !graphName.empty()
 		&& contains(ALGO_NAMES, algoName)
 		&& contains(SPACE_NAMES, spaceName)
+		&& contains(BORDER_POLICY_NAMES, borderPolicyName)
 		&& contains(INITIAL_PLACEMENT_NAMES, initialPlacementName)
 		&& contains(PROJECTION_NAMES, projectionName);
 }
 
 Config parseArgs(int argc, char** argv) {
 	Config cfg;
+	std::string figSizeArg;
+	bool hasSeed = false;
 
 	for (int i = 1; i < argc; i++) {
 		const std::string arg = argv[i];
@@ -94,6 +129,9 @@ Config parseArgs(int argc, char** argv) {
 		} else if (arg == "--space") {
 			if (i + 1 >= argc) throw ConfigError("--space requires a value");
 			cfg.spaceName = argv[++i];
+		} else if (arg == "--borderPolicy") {
+			if (i + 1 >= argc) throw ConfigError("--borderPolicy requires a value");
+			cfg.borderPolicyName = argv[++i];
 		} else if (arg == "--initial-placement") {
 			if (i + 1 >= argc) throw ConfigError("--initial-placement requires a value");
 			cfg.initialPlacementName = argv[++i];
@@ -109,9 +147,29 @@ Config parseArgs(int argc, char** argv) {
 		} else if (arg == "--dim") {
 			if (i + 1 >= argc) throw ConfigError("--dim requires a value");
 			cfg.dimension = std::stoi(argv[++i]);
+		} else if (arg == "--2d") {
+			cfg.finalDimension = 2;
+		} else if (arg == "--3d") {
+			cfg.finalDimension = 3;
 		} else if (arg == "--FS") {
 			if (i + 1 >= argc) throw ConfigError("--FS requires a value");
-			cfg.figSize = parseFigSize(argv[++i], cfg.dimension);
+			figSizeArg = argv[++i];
+		} else if (arg == "--seed") {
+			if (i + 1 >= argc) throw ConfigError("--seed requires a value");
+			const std::string value = argv[++i];
+			try {
+				size_t parsed = 0;
+				const unsigned long long seed = std::stoull(value, &parsed);
+				if (parsed != value.size() || seed > std::numeric_limits<uint32_t>::max()) {
+					throw ConfigError("--seed must be a uint32 value");
+				}
+				cfg.seed = static_cast<uint32_t>(seed);
+				hasSeed = true;
+			} catch (const ConfigError&) {
+				throw;
+			} catch (const std::exception&) {
+				throw ConfigError("--seed must be a uint32 value");
+			}
 		} else {
 			throw ConfigError("Unknown argument: " + arg);
 		}
@@ -126,11 +184,11 @@ Config parseArgs(int argc, char** argv) {
 	if (cfg.spaceName.empty()) {
 		cfg.spaceName = "euclidean";
 	}
+	if (cfg.borderPolicyName.empty()) {
+		cfg.borderPolicyName = "default";
+	}
 	if (cfg.initialPlacementName.empty()) {
 		cfg.initialPlacementName = "zero";
-	}
-	if (cfg.projectionName.empty()) {
-		cfg.projectionName = "identity";
 	}
 	if (cfg.datasetPath.empty()) {
 		cfg.datasetPath = "samples/dataset.json";
@@ -139,10 +197,27 @@ Config parseArgs(int argc, char** argv) {
 		cfg.outputPath = "out/" + cfg.graphName + "_" + cfg.algoName + ".json";
 	}
 
-	if (cfg.figSize.empty()) {
-		cfg.figSize = std::vector<int32_t>(cfg.dimension, kDefaultFaRFigSide);
-	} else if (static_cast<int>(cfg.figSize.size()) != cfg.dimension) {
-		throw ConfigError("figSize length != dimension");
+	if (cfg.finalDimension > cfg.dimension) {
+		throw ConfigError("final dimension > computation dimension");
+	}
+	if (cfg.projectionName.empty()) {
+		if (cfg.spaceName == "hyperbolic" && cfg.dimension == 2 && cfg.finalDimension == 2) {
+			cfg.projectionName = "poincare";
+		} else {
+			cfg.projectionName = (cfg.dimension > cfg.finalDimension) ? "orthogonal" : "identity";
+		}
+	}
+	if (!hasSeed) {
+		cfg.seed = std::chrono::steady_clock::now().time_since_epoch().count();
+	}
+
+	if (figSizeArg.empty()) {
+		cfg.figSize = std::vector<int32_t>(cfg.finalDimension, kDefaultFaRFigSide);
+	} else {
+		cfg.figSize = parseFigSize(figSizeArg, cfg.finalDimension);
+	}
+	if (static_cast<int>(cfg.figSize.size()) != cfg.finalDimension) {
+		throw ConfigError("figSize length != final dimension");
 	}
 
 	if (!cfg.isValid()) {
@@ -187,6 +262,44 @@ FaRInteractiveParams readFaRInteractiveParams(std::istream& in, std::ostream& ou
 		}
 	}
 	return FaRInteractiveParams{iters, c};
+}
+
+BorderPolicyInteractiveParams readBorderPolicyInteractiveParams(
+	const std::string& borderPolicyName,
+	int32_t dim,
+	std::istream& in,
+	std::ostream& out) {
+	out << "BorderPolicy " << borderPolicyName << " params, empty = defaults: " << std::flush;
+	std::string line;
+	if (!std::getline(in, line)) {
+		throw ConfigError("BorderPolicy: EOF");
+	}
+
+	BorderPolicyInteractiveParams p;
+	if (line.empty()) {
+		return p;
+	}
+
+	std::istringstream ls(line);
+	std::string flag;
+	while (ls >> flag) {
+		if (borderPolicyName == "default") {
+			throw ConfigError("BorderPolicy default: no params expected");
+		}
+		if (borderPolicyName == "poly") {
+			if (flag != "--S") {
+				throw ConfigError("BorderPolicy poly: expected --S, got: " + flag);
+			}
+			std::string val;
+			if (!(ls >> val)) {
+				throw ConfigError("BorderPolicy poly: value after --S");
+			}
+			p.sideSizes = parseBorderSideSizes(val, dim);
+		} else {
+			throw ConfigError("BorderPolicy: unknown name: " + borderPolicyName);
+		}
+	}
+	return p;
 }
 
 } // namespace gd

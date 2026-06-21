@@ -6,6 +6,7 @@
 #include "../core/Embedding.h"
 #include "../core/Errors.h"
 #include "../metrics/Metrics.h"
+#include "../spaces/Space.h"
 
 namespace gd {
 
@@ -14,7 +15,10 @@ public:
 	using GraphDrawingError::GraphDrawingError;
 };
 
-void writeEmbeddingJson(const Config& cfg, const Embedding& res, const Metrics& metrics);
+void writeEmbeddingJson(
+	const Config& cfg,
+	const Embedding& res,
+	const Space& drawingSpace,
+	const Metrics& metrics);
         
 } // namespace gd
-
