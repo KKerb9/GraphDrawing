@@ -112,7 +112,9 @@ def poincare_geodesic(a, b, radius, samples=80):
 
 
 def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=None):
-        plt.figure(figsize=(6, 6))
+        fig, ax = plt.subplots(figsize=(8, 8))
+        fig.patch.set_facecolor("#f7f9fc")
+        ax.set_facecolor("#f7f9fc")
 
         sz = 170
         font_sz = 7
@@ -120,8 +122,10 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
         nx.draw_networkx_nodes(
                 G=g,
                 pos=pos,
-                node_color="lightblue",
-                edgecolors="black",
+                ax=ax,
+                node_color="#8ecae6",
+                edgecolors="#24445c",
+                linewidths=1.1,
                 node_size=sz,
         )
         if drawing_space == "poincare":
@@ -132,35 +136,45 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
                         (0.0, 0.0),
                         radius,
                         fill=False,
-                        color="black",
-                        linewidth=0.8,
+                        color="#667085",
+                        linewidth=1.1,
                 )
-                plt.gca().add_patch(boundary)
+                ax.add_patch(boundary)
                 for u, v in g.edges():
                         xs, ys = poincare_geodesic(pos[u], pos[v], radius)
-                        plt.plot(xs, ys, color="black", linewidth=0.7, zorder=1)
+                        ax.plot(xs, ys, color="#475467", linewidth=0.85, alpha=0.8, zorder=1)
         else:
-                nx.draw_networkx_edges(G=g, pos=pos, width=0.7)
+                nx.draw_networkx_edges(
+                        G=g,
+                        pos=pos,
+                        ax=ax,
+                        width=0.85,
+                        edge_color="#475467",
+                        alpha=0.8,
+                )
         nx.draw_networkx_labels(
                 G=g,
                 pos=pos,
+                ax=ax,
                 labels={v: str(v) for v in g.nodes()},
                 font_size=font_sz,
+                font_color="#172b3a",
         )
 
         if title:
-                plt.title(title)
+                ax.set_title(title, fontsize=15, pad=14)
 
-        plt.gca().set_aspect("equal", adjustable="box")
+        ax.set_aspect("equal", adjustable="box")
         if fig_size is not None:
-                plt.xlim(-fig_size[0] / 2.0, fig_size[0] / 2.0)
-                plt.ylim(-fig_size[1] / 2.0, fig_size[1] / 2.0)
-        plt.axis("off")
+                ax.set_xlim(-fig_size[0] / 2.0, fig_size[0] / 2.0)
+                ax.set_ylim(-fig_size[1] / 2.0, fig_size[1] / 2.0)
+        ax.axis("off")
 
         out_dir = os.path.dirname(output_path) or "."
         os.makedirs(out_dir, exist_ok=True)
-        plt.savefig(output_path, dpi=150, bbox_inches="tight")
-        plt.close()
+        fig.tight_layout(pad=0.8)
+        fig.savefig(output_path, dpi=180, bbox_inches="tight", facecolor=fig.get_facecolor())
+        plt.close(fig)
 
 
 def parse_args():
