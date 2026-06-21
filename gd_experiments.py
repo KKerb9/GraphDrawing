@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -8,7 +9,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tupl
 
 import pandas as pd
 
-METRIC_KEYS = (
+metricKeys = (
 	"volume",
 	"minVertexDist",
 	"maxVertexDist",
@@ -17,151 +18,187 @@ METRIC_KEYS = (
 	"minAngle",
 	"maxAngle",
 	"density",
+	"imageScore",
 )
 
-ALGOS_WITH_STDIN = frozenset({"far"})
+algosWithStdin = frozenset({"far"})
 
-STDIN_DEFAULT = {
+stdinDefault = {
 	"far": "\n",
 }
 
+currentResult: Optional[Dict[str, Any]] = None
+
 # argv: аргументы CLI (как sys.argv без имени программы).
-# algo_flags: последовательность значений для stdin (или None — взять STDIN_DEFAULT для алгоритма).
-def algoFlagsToStdinLine(argv: Sequence[str], algo_flags: Optional[Sequence[Any]]) -> Optional[str]:
-	_, a, _ = _parse(argv)
-	if algo_flags is None:
-		return STDIN_DEFAULT.get(a)
-	if not algo_flags:
-		if a in ALGOS_WITH_STDIN:
-			return STDIN_DEFAULT.get(a, "\n")
+# algoFlags: последовательность значений для stdin (или None — взять stdinDefault для алгоритма).
+def algoFlagsToStdinLine(argv: Sequence[str], algoFlags: Optional[Sequence[Any]]) -> Optional[str]:
+	_, algoName, _ = parseArgs(argv)
+	if algoFlags is None:
+		return stdinDefault.get(algoName)
+	if not algoFlags:
+		if algoName in algosWithStdin:
+			return stdinDefault.get(algoName, "\n")
 		return None
-	return " ".join(str(x) for x in algo_flags) + "\n"
+	return " ".join(str(x) for x in algoFlags) + "\n"
 
 
 def binaryPath(repo: Path) -> Path:
 	return repo / "build" / "graph_drawing"
 
 
-def compileGd(repo: Path, build_dir: str = "build") -> None:
-	b = repo / build_dir
+def compileGd(repo: Path, buildDir: str = "build") -> None:
+	b = repo / buildDir
 	b.mkdir(parents=True, exist_ok=True)
 	subprocess.run(["cmake", "-S", str(repo), "-B", str(b)], cwd=repo)
 	subprocess.run(["cmake", "--build", str(b)], cwd=repo)
 
 
-def _parse(argv: Sequence[str]) -> Tuple[str, str, Optional[str]]:
-	g, a, out = "SmallGraph", "random", None
+def parseArgs(argv: Sequence[str]) -> Tuple[str, str, Optional[str]]:
+	graphName, algoName, output = "SmallGraph", "random", None
 	i = 0
 	while i < len(argv):
 		if argv[i] == "--graph" and i + 1 < len(argv):
-			g = argv[i + 1]
+			graphName = argv[i + 1]
 			i += 2
 		elif argv[i] == "--algo" and i + 1 < len(argv):
-			a = argv[i + 1]
+			algoName = argv[i + 1]
 			i += 2
 		elif argv[i] == "--output" and i + 1 < len(argv):
-			out = argv[i + 1]
+			output = argv[i + 1]
 			i += 2
 		else:
 			i += 1
-	return g, a, out
+	return graphName, algoName, output
 
 
 def outputJsonPath(repo: Path, argv: Sequence[str]) -> Path:
-	g, a, out = _parse(argv)
-	if out:
-		p = Path(out)
+	graphName, algoName, output = parseArgs(argv)
+	if output:
+		p = Path(output)
 		return p if p.is_absolute() else repo / p
-	return repo / "out" / f"{g}_{a}.json"
+	return repo / "out" / f"{graphName}_{algoName}.json"
 
 
 def runGd(
 	argv: Sequence[str],
 	repo: Path,
-	algo_flags: Optional[Sequence[Any]] = None,
+	algoFlags: Optional[Sequence[Any]] = None,
 ) -> Dict[str, Any]:
-	cmd = [str(binaryPath(repo))] + list(argv)
-	line = algoFlagsToStdinLine(argv, algo_flags)
+	global currentResult
+
+	command = [str(binaryPath(repo))] + list(argv)
+	line = algoFlagsToStdinLine(argv, algoFlags)
 	if isinstance(line, bytes):
 		line = line.decode(errors="replace")
 	if line is None:
-		p = subprocess.run(cmd, cwd=repo, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+		process = subprocess.run(command, cwd=repo, capture_output=True, text=True, stdin=subprocess.DEVNULL)
 	else:
-		p = subprocess.run(cmd, cwd=repo, capture_output=True, text=True, input=line)
+		process = subprocess.run(command, cwd=repo, capture_output=True, text=True, input=line)
 
 	path = outputJsonPath(repo, argv)
 	data = {}
 	if path.is_file():
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
-	metrics = data.get("metrics") or {}
+	metrics = data.setdefault("metrics", {}) if data else {}
 
-	af_repr = None if algo_flags is None else " ".join(str(x) for x in algo_flags)
+	algoFlagsRepr = None if algoFlags is None else " ".join(str(x) for x in algoFlags)
 
-	return {
-		"returncode": p.returncode,
-		"stdout": p.stdout or "",
-		"stderr": p.stderr or "",
-		"json_path": path,
+	result = {
+		"returnCode": process.returncode,
+		"stdout": process.stdout or "",
+		"stderr": process.stderr or "",
+		"jsonPath": path,
 		"metrics": metrics,
 		"json": data,
+		"seed": data.get("seed") if data else None,
 		"argv": list(argv),
-		"argv_repr": " ".join(argv),
-		"algo_flags": None if algo_flags is None else list(algo_flags),
-		"algo_flags_repr": af_repr,
-		"stdin_repr": line,
+		"argvRepr": " ".join(argv),
+		"algoFlags": None if algoFlags is None else list(algoFlags),
+		"algoFlagsRepr": algoFlagsRepr,
+		"stdinRepr": line,
 	}
+	currentResult = result
+	return result
+
+
+def setImageScore(imageScore: float) -> None:
+	global currentResult
+
+	if currentResult is None:
+		raise RuntimeError("setImageScore: runGd must be called first")
+	if isinstance(imageScore, bool) or not isinstance(imageScore, (int, float)):
+		raise TypeError("setImageScore: imageScore must be a number")
+	imageScore = float(imageScore)
+	if not math.isfinite(imageScore):
+		raise ValueError("setImageScore: imageScore must be finite")
+
+	jsonPath = Path(currentResult["jsonPath"])
+	if not jsonPath.is_file():
+		raise FileNotFoundError("setImageScore: result JSON not found: " + str(jsonPath))
+
+	with open(jsonPath, encoding="utf-8") as f:
+		data = json.load(f)
+	metrics = data.setdefault("metrics", {})
+	if not isinstance(metrics, dict):
+		raise ValueError("setImageScore: JSON metrics must be an object")
+
+	metrics["imageScore"] = imageScore
+	currentResult["imageScore"] = imageScore
+	currentResult["metrics"] = metrics
+	currentResult["json"] = data
+
+	with open(jsonPath, "w", encoding="utf-8") as f:
+		json.dump(data, f, ensure_ascii=False, indent=2)
+		f.write("\n")
 
 
 def runRender(
 	repo: Path,
-	json_path: Union[str, Path],
-	png_path: Optional[Union[str, Path]] = None,
+	jsonPath: Union[str, Path],
+	pngPath: Optional[Union[str, Path]] = None,
 	dataset: Optional[str] = None,
 ) -> Path:
-	jp = Path(json_path)
+	jp = Path(jsonPath)
 	args = [sys.executable, str(repo / "render.py"), str(jp)]
 	if dataset is not None:
 		args += ["--dataset", str(dataset)]
-	if png_path is not None:
-		args += ["-o", str(png_path)]
+	if pngPath is not None:
+		args += ["-o", str(pngPath)]
 	subprocess.run(args, cwd=repo)
-	if png_path:
-		return Path(png_path)
+	if pngPath:
+		return Path(pngPath)
 	return jp.parent / f"{jp.stem}.png"
 
 
 def experimentRow(
 	metrics: Dict[str, Any],
-	image_score: Optional[float] = None,
-	argv_repr: Optional[str] = None,
-	algo_flags_repr: Optional[str] = None,
-	stdin_repr: Optional[str] = None,
-	json_path: Optional[Union[str, Path]] = None,
-	png_path: Optional[Union[str, Path]] = None,
+	argvRepr: Optional[str] = None,
+	algoFlagsRepr: Optional[str] = None,
+	stdinRepr: Optional[str] = None,
+	jsonPath: Optional[Union[str, Path]] = None,
+	pngPath: Optional[Union[str, Path]] = None,
 	note: Optional[str] = None,
 	extra: Optional[Dict[str, Any]] = None,
 ) -> pd.Series:
-	row = {k: metrics.get(k) for k in METRIC_KEYS}
-	row["image_score"] = image_score
-	row["argv_repr"] = argv_repr
-	row["algo_flags_repr"] = algo_flags_repr
-	row["stdin_repr"] = stdin_repr
-	row["json_path"] = str(json_path) if json_path else None
-	row["png_path"] = str(png_path) if png_path else None
+	row = {k: metrics.get(k) for k in metricKeys}
+	row["argvRepr"] = argvRepr
+	row["algoFlagsRepr"] = algoFlagsRepr
+	row["stdinRepr"] = stdinRepr
+	row["jsonPath"] = str(jsonPath) if jsonPath else None
+	row["pngPath"] = str(pngPath) if pngPath else None
 	row["note"] = note
 	if extra:
 		row.update(extra)
 	return pd.Series(row)
 
 
-LOG_ROW_EXTRA_KEYS = (
-	"image_score",
-	"argv_repr",
-	"algo_flags_repr",
-	"stdin_repr",
-	"json_path",
-	"png_path",
+logRowExtraKeys = (
+	"argvRepr",
+	"algoFlagsRepr",
+	"stdinRepr",
+	"jsonPath",
+	"pngPath",
 	"note",
 )
 
@@ -169,16 +206,16 @@ LOG_ROW_EXTRA_KEYS = (
 def logRowAsPairs(
 	row: Union[pd.Series, pd.DataFrame],
 	*,
-	row_index: int = -1,
+	rowIndex: int = -1,
 	field: str = "поле",
 	value: str = "значение",
 ) -> pd.DataFrame:
 	"""Одна строка лога → таблица из двух столбцов (название поля, значение), по строке на поле."""
 	if isinstance(row, pd.DataFrame):
-		row = row.iloc[row_index]
+		row = row.iloc[rowIndex]
 	ordered: List[str] = []
 	seen: set[str] = set()
-	for k in list(METRIC_KEYS) + list(LOG_ROW_EXTRA_KEYS):
+	for k in list(metricKeys) + list(logRowExtraKeys):
 		if k in row.index and k not in seen:
 			ordered.append(k)
 			seen.add(k)
@@ -190,17 +227,17 @@ def logRowAsPairs(
 
 
 def logDfAsPairs(
-	log_df: pd.DataFrame,
+	logDf: pd.DataFrame,
 	*,
 	field: str = "поле",
 	value: str = "значение",
-	run_label: str = "запуск",
+	runLabel: str = "запуск",
 ) -> pd.DataFrame:
-	"""Несколько строк лога: колонка run_label + поле + значение (длинный формат)."""
+	"""Несколько строк лога: колонка runLabel + поле + значение (длинный формат)."""
 	parts: List[pd.DataFrame] = []
-	for i in range(len(log_df)):
-		t = logRowAsPairs(log_df.iloc[i], field=field, value=value)
-		t.insert(0, run_label, i)
+	for i in range(len(logDf)):
+		t = logRowAsPairs(logDf.iloc[i], field=field, value=value)
+		t.insert(0, runLabel, i)
 		parts.append(t)
 	return pd.concat(parts, ignore_index=True)
 
@@ -224,21 +261,21 @@ def styleLogPairsTable(df: pd.DataFrame):
 
 
 def appendLogRow(
-	log_df: Optional[pd.DataFrame],
+	logDf: Optional[pd.DataFrame],
 	metrics: Dict[str, Any],
 	**kwargs: Any,
 ) -> pd.DataFrame:
-	append_csv = kwargs.pop("append_csv", None)
+	appendCsv = kwargs.pop("appendCsv", None)
 	row = experimentRow(metrics, **kwargs)
-	next_df = pd.DataFrame([row]) if log_df is None or log_df.empty else pd.concat([log_df, row.to_frame().T], ignore_index=True)
-	if append_csv is not None:
-		path = Path(append_csv)
+	nextDf = pd.DataFrame([row]) if logDf is None or logDf.empty else pd.concat([logDf, row.to_frame().T], ignore_index=True)
+	if appendCsv is not None:
+		path = Path(appendCsv)
 		path.parent.mkdir(parents=True, exist_ok=True)
-		next_df.tail(1).to_csv(path, mode="a", header=not path.is_file(), index=False)
-	return next_df
+		nextDf.tail(1).to_csv(path, mode="a", header=not path.is_file(), index=False)
+	return nextDf
 
 
-def _metricContribs(vals: Sequence[float], w: float) -> List[float]:
+def metricContribs(vals: Sequence[float], w: float) -> List[float]:
 	if w == 0:
 		return [0.0] * len(vals)
 	vmin, vmax = min(vals), max(vals)
@@ -256,40 +293,73 @@ def bestOfN(
 	argv: Sequence[str],
 	n: int,
 	weights: Dict[str, float],
-	algo_flags: Optional[Sequence[Any]] = None,
-	out_dir: Optional[Union[str, Path]] = None,
+	algoFlags: Optional[Sequence[Any]] = None,
+	outDir: Optional[Union[str, Path]] = None,
 	algoFlagsForRun: Optional[Callable[[int], Iterator[Optional[Sequence[Any]]]]] = None,
+	baseSeed: Optional[int] = None,
 ) -> Tuple[Dict[str, Any], List[float], List[Dict[str, Any]]]:
+	global currentResult
+
 	"""
-	algo_flags — на каждый прогон, если algoFlagsForRun не задан.
+	algoFlags — на каждый прогон, если algoFlagsForRun не задан.
 	algoFlagsForRun(iters) — функция из ноутбука: iters == n, внутри yield на прогон;
-	вызывается как iter(algoFlagsForRun(n)). Если yield кончились раньше n — дальше algo_flags.
-	weights — коэффициенты по ключам из METRIC_KEYS; 0 пропускается, знак задаёт направление оптимизации.
+	вызывается как iter(algoFlagsForRun(n)). Если yield кончились раньше n — дальше algoFlags.
+	baseSeed задаёт seeds baseSeed + i; без него используется --seed из argv или случайные seeds.
+	weights — коэффициенты по ключам из metricKeys; 0 пропускается, знак задаёт направление оптимизации.
 	"""
-	g, a, _ = _parse(argv)
-	out_dir = Path(out_dir or repo / "out" / "batch_runs")
-	out_dir.mkdir(parents=True, exist_ok=True)
-	it = iter(algoFlagsForRun(n)) if algoFlagsForRun is not None else None
+	if n <= 0:
+		raise ValueError("bestOfN: n must be positive")
+	graphName, algoName, _ = parseArgs(argv)
+	argvBaseSeed = None
+	if baseSeed is None:
+		for seedIndex, arg in enumerate(argv):
+			if arg != "--seed":
+				continue
+			if seedIndex + 1 >= len(argv):
+				raise ValueError("bestOfN: --seed requires a value")
+			try:
+				argvBaseSeed = int(argv[seedIndex + 1])
+			except (TypeError, ValueError) as e:
+				raise ValueError("bestOfN: --seed must be a uint32 value") from e
+	resolvedBaseSeed = baseSeed if baseSeed is not None else argvBaseSeed
+	if resolvedBaseSeed is not None:
+		if isinstance(resolvedBaseSeed, bool) or not isinstance(resolvedBaseSeed, int):
+			raise TypeError("bestOfN: baseSeed must be an integer")
+		if resolvedBaseSeed < 0 or resolvedBaseSeed + n - 1 > 2**32 - 1:
+			raise ValueError("bestOfN: seed sequence must fit uint32")
+	outDir = Path(outDir or repo / "out" / "batch_runs")
+	outDir.mkdir(parents=True, exist_ok=True)
+	algoFlagsIterator = iter(algoFlagsForRun(n)) if algoFlagsForRun is not None else None
 	runs = []
 	for i in range(n):
-		out = out_dir / f"{g}_{a}_batch_{i}.json"
-		av = list(argv)
-		if "--output" in av:
-			j = av.index("--output")
-			av[j + 1] = str(out)
+		out = outDir / f"{graphName}_{algoName}_batch_{i}.json"
+		currentArgv = list(argv)
+		if resolvedBaseSeed is not None:
+			withoutSeed = []
+			argIndex = 0
+			while argIndex < len(currentArgv):
+				if currentArgv[argIndex] == "--seed":
+					argIndex += 2
+					continue
+				withoutSeed.append(currentArgv[argIndex])
+				argIndex += 1
+			currentArgv = withoutSeed + ["--seed", str(resolvedBaseSeed + i)]
+		if "--output" in currentArgv:
+			j = currentArgv.index("--output")
+			currentArgv[j + 1] = str(out)
 		else:
-			av += ["--output", str(out)]
-		af = algo_flags
-		if it is not None:
+			currentArgv += ["--output", str(out)]
+		currentAlgoFlags = algoFlags
+		if algoFlagsIterator is not None:
 			try:
-				af = next(it)
+				currentAlgoFlags = next(algoFlagsIterator)
 			except StopIteration:
-				af = algo_flags
-		runs.append(runGd(av, repo, algo_flags=af))
+				currentAlgoFlags = algoFlags
+		runs.append(runGd(currentArgv, repo, algoFlags=currentAlgoFlags))
 
-	keys = [k for k in METRIC_KEYS if weights.get(k)]
+	keys = [k for k in metricKeys if weights.get(k)]
 	if not keys:
-		keys = list(METRIC_KEYS)
+		keys = list(metricKeys)
 	scores = [0.0] * n
 	for k in keys:
 		w = weights.get(k, 0.0)
@@ -298,7 +368,8 @@ def bestOfN(
 		for r in runs:
 			v = r["metrics"].get(k)
 			vals.append(float(v) if v is not None else 0.0)
-		for i, c in enumerate(_metricContribs(vals, w)):
+		for i, c in enumerate(metricContribs(vals, w)):
 			scores[i] += c
-	best_i = max(range(n), key=lambda j: scores[j])
-	return runs[best_i], scores, runs
+	bestI = max(range(n), key=lambda j: scores[j])
+	currentResult = runs[bestI]
+	return runs[bestI], scores, runs

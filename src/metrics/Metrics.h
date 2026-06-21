@@ -5,8 +5,8 @@
 
 #include "../core/Errors.h"
 #include "../core/template.h"
-#include "../spaces/Space.h"
 #include "../core/Embedding.h"
+#include "../spaces/Space.h"
 
 namespace gd {
 
@@ -26,6 +26,6 @@ struct Metrics {
 	ld density;
 };
 
-Metrics computeMetrics(const Embedding& emb, const Space& space, const std::vector<int32_t>& figSize);
+Metrics computeMetrics(const Embedding& emb, const Space& space);
 
 } // namespace gd

@@ -16,7 +16,11 @@ void checkOutDir(const std::string& path) {
 	}
 }
 
-void writeEmbeddingJson(const Config& cfg, const Embedding& res, const Metrics& metrics) {
+void writeEmbeddingJson(
+		const Config& cfg,
+		const Embedding& res,
+		const Space& drawingSpace,
+		const Metrics& metrics) {
 	checkOutDir(cfg.outputPath);
 
 	std::ofstream out(cfg.outputPath);
@@ -28,9 +32,19 @@ void writeEmbeddingJson(const Config& cfg, const Embedding& res, const Metrics& 
 	out << "  \"graph_name\": \"" << cfg.graphName << "\",\n";
 	out << "  \"algo\": \"" << cfg.algoName << "\",\n";
 	out << "  \"space\": \"" << cfg.spaceName << "\",\n";
+	out << "  \"drawing_space\": \"" << drawingSpace.name() << "\",\n";
 	out << "  \"initial_placement\": \"" << cfg.initialPlacementName << "\",\n";
 	out << "  \"projection\": \"" << cfg.projectionName << "\",\n";
+	out << "  \"seed\": " << cfg.seed << ",\n";
         out << "  \"dimension\": " << res.dimension() << ",\n";
+	out << "  \"fig_size\": [";
+	for (int32_t i = 0; i < static_cast<int32_t>(cfg.figSize.size()); i++) {
+		if (i > 0) {
+			out << ", ";
+		}
+		out << cfg.figSize[i];
+	}
+	out << "],\n";
 	out << "  \"nodes\": [\n";
 
 	{
@@ -76,10 +90,10 @@ void writeEmbeddingJson(const Config& cfg, const Embedding& res, const Metrics& 
         out << std::fixed << std::setprecision(6);
 	out << "    \"minAngle\": " << metrics.minAngle << ",\n";
 	out << "    \"maxAngle\": " << metrics.maxAngle << ",\n";
-	out << "    \"density\": " << metrics.density << "\n";
+	out << "    \"density\": " << metrics.density << ",\n";
+	out << "    \"imageScore\": " << 0 << "\n";
 	out << "  }\n";
 	out << "}\n";
 }
 
 } // namespace gd
-

@@ -6,6 +6,7 @@
 #include "template.h"
 #include "Embedding.h"
 #include "Errors.h"
+#include "BorderPolicy.h"
 #include "../spaces/Space.h"
 
 namespace gd {
@@ -22,7 +23,7 @@ public:
 	virtual void computeInitial(
 		Embedding& emb,
 		const Space& space,
-		const std::vector<int32_t>& figSize) const = 0;
+		const BorderPolicy& borderPolicy) const = 0;
 };
 
 class ZeroInitialPlacement final : public InitialPlacementStrategy {
@@ -32,7 +33,7 @@ public:
 	void computeInitial(
 		Embedding& emb,
 		const Space& space,
-		const std::vector<int32_t>& figSize) const override;
+		const BorderPolicy& borderPolicy) const override;
 };
 
 class RandomInitialPlacement final : public InitialPlacementStrategy {
@@ -42,7 +43,7 @@ public:
 	void computeInitial(
 		Embedding& emb,
 		const Space& space,
-		const std::vector<int32_t>& figSize) const override;
+		const BorderPolicy& borderPolicy) const override;
 };
 
 using InitialPlacementStrategyPtr = std::unique_ptr<InitialPlacementStrategy>;

@@ -18,6 +18,8 @@ class Space {
 public:
         virtual ~Space() = default;
 
+        static ld determinantBareiss(std::vector<std::vector<ld>> a);
+
         virtual std::string name() const = 0;
 
         virtual int32_t dimension() const = 0;
@@ -26,9 +28,21 @@ public:
 
         virtual ld norm(const Pt& vec) const = 0;  // норма
 
-        virtual ll area(const std::vector<int32_t>& size) const = 0;
+        virtual Pt logMap(const Pt& from, const Pt& to) const = 0;  // переводит to в касательное пространство к точке from
+
+        virtual Pt expMap(const Pt& from, const Pt& tangent) const = 0;  // переводит точку tangent из касательного пространства к from обратно в многообразие
+
+        virtual ld tangentNorm(const Pt& at, const Pt& tangent) const = 0;  // риманова норма касательного вектора tangent в точке at
+
+        virtual Pt normalizePoint(const Pt& p, const std::vector<int32_t>& figSize) const = 0;  // нормирует точку p на границы figSize
+
+        virtual ld volume(const std::vector<int32_t>& figSize) const = 0;
+
+        virtual bool areGeodesicSegmentsCrossing(const Pt& a, const Pt& b, const Pt& c, const Pt& d) const = 0;
 
         virtual bool isValid(const Pt& c) const = 0;
+
+        static bool areEuclideanSegmentsCrossing2D(const Pt& a, const Pt& b, const Pt& c, const Pt& d);
 };
 
 using SpacePtr = std::unique_ptr<Space>;

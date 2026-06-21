@@ -1,5 +1,6 @@
 import argparse
 import json
+import math
 import os
 
 import matplotlib.pyplot as plt
@@ -71,7 +72,46 @@ def build_graph(result, dataset_path):
         return g, pos
 
 
-def draw_graph(g, pos, output_path, title=None):
+def get_fig_size(result, dim):
+        fig_size = result.get("fig_size")
+        if fig_size is None:
+                return None
+        if len(fig_size) != dim:
+                raise ValueError("fig_size length must be " + str(dim))
+        return [float(x) for x in fig_size]
+
+
+def poincare_geodesic(a, b, radius, samples=80):
+        ax, ay = a
+        bx, by = b
+        determinant = ax * by - ay * bx
+        scale = max(radius * radius, 1.0)
+        if abs(determinant) <= 1e-12 * scale:
+                return [ax, bx], [ay, by]
+
+        aValue = (ax * ax + ay * ay + radius * radius) / 2.0
+        bValue = (bx * bx + by * by + radius * radius) / 2.0
+        centerX = (aValue * by - ay * bValue) / determinant
+        centerY = (ax * bValue - aValue * bx) / determinant
+        circleRadius = math.sqrt(max(centerX * centerX + centerY * centerY - radius * radius, 0.0))
+
+        start = math.atan2(ay - centerY, ax - centerX)
+        end = math.atan2(by - centerY, bx - centerX)
+        shortSweep = (end - start + math.pi) % (2.0 * math.pi) - math.pi
+        middle = start + shortSweep / 2.0
+        middleX = centerX + circleRadius * math.cos(middle)
+        middleY = centerY + circleRadius * math.sin(middle)
+        if middleX * middleX + middleY * middleY > radius * radius:
+                shortSweep -= math.copysign(2.0 * math.pi, shortSweep)
+
+        angles = [start + shortSweep * i / (samples - 1) for i in range(samples)]
+        return (
+                [centerX + circleRadius * math.cos(angle) for angle in angles],
+                [centerY + circleRadius * math.sin(angle) for angle in angles],
+        )
+
+
+def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=None):
         plt.figure(figsize=(6, 6))
 
         sz = 170
@@ -84,7 +124,23 @@ def draw_graph(g, pos, output_path, title=None):
                 edgecolors="black",
                 node_size=sz,
         )
-        nx.draw_networkx_edges(G=g, pos=pos, width=0.7)
+        if drawing_space == "poincare":
+                if fig_size is None:
+                        raise ValueError("Poincare rendering requires fig_size")
+                radius = min(fig_size) / 2.0
+                boundary = plt.Circle(
+                        (0.0, 0.0),
+                        radius,
+                        fill=False,
+                        color="black",
+                        linewidth=0.8,
+                )
+                plt.gca().add_patch(boundary)
+                for u, v in g.edges():
+                        xs, ys = poincare_geodesic(pos[u], pos[v], radius)
+                        plt.plot(xs, ys, color="black", linewidth=0.7, zorder=1)
+        else:
+                nx.draw_networkx_edges(G=g, pos=pos, width=0.7)
         nx.draw_networkx_labels(
                 G=g,
                 pos=pos,
@@ -95,7 +151,10 @@ def draw_graph(g, pos, output_path, title=None):
         if title:
                 plt.title(title)
 
-        plt.axis("equal")
+        plt.gca().set_aspect("equal", adjustable="box")
+        if fig_size is not None:
+                plt.xlim(-fig_size[0] / 2.0, fig_size[0] / 2.0)
+                plt.ylim(-fig_size[1] / 2.0, fig_size[1] / 2.0)
         plt.axis("off")
 
         out_dir = os.path.dirname(output_path) or "."
@@ -156,6 +215,7 @@ def main():
 
         try:
                 g, pos = build_graph(result, dataset_path)
+                fig_size = get_fig_size(result, 2)
         except ValueError as e:
                 print("error: " + str(e))
                 return 1
@@ -169,7 +229,8 @@ def main():
                 output_path = os.path.join(base_dir if base_dir else ".", filename)
 
         title = graph_name + " (" + algo_name + ")"
-        draw_graph(g, pos, output_path, title)
+        drawing_space = result.get("drawing_space", "euclidean")
+        draw_graph(g, pos, output_path, title, fig_size, drawing_space)
 
         print("saved PNG to " + output_path)
 

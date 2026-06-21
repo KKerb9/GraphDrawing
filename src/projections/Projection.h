@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "../core/Embedding.h"
 #include "../core/Errors.h"
@@ -14,37 +16,28 @@ public:
 	using GraphDrawingError::GraphDrawingError;
 };
 
+struct ProjectionResult {
+	Embedding embedding;
+	SpacePtr space;
+};
+
 class Projection {
 public:
 	virtual ~Projection() = default;
 
 	virtual std::string name() const = 0;
 
-	virtual Embedding project(const Embedding& emb, const Space& space, int32_t finalDim) const = 0;
-};
+	virtual ProjectionResult project(
+		const Embedding& emb,
+		const Space& space,
+		const std::vector<int32_t>& figSize,
+		int32_t finalDim) const = 0;
 
-class IdentityProjection : public Projection {
-public:
-	explicit IdentityProjection();
-
-	std::string name() const override;
-
-	Embedding project(const Embedding& emb, const Space& space, int32_t finalDim) const override;
-
-private:
-	std::string _name;
-};
-
-class OrthogonalProjection : public Projection {
-public:
-	explicit OrthogonalProjection();
-
-	std::string name() const override;
-
-	Embedding project(const Embedding& emb, const Space& space, int32_t finalDim) const override;
-
-private:
-	std::string _name;
+protected:
+	static std::vector<Pt> fitToFigSize(
+		const std::vector<Pt>& coords,
+		const std::vector<int32_t>& figSize,
+		int32_t finalDim);
 };
 
 using ProjectionPtr = std::unique_ptr<Projection>;
@@ -52,4 +45,3 @@ using ProjectionPtr = std::unique_ptr<Projection>;
 ProjectionPtr createProjection(const std::string& projName);
 
 } // namespace gd
-

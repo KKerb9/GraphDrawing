@@ -6,6 +6,7 @@
 #include "../core/Errors.h"
 #include "../core/Graph.h"
 #include "../core/InitialPlacement.h"
+#include "../core/BorderPolicy.h"
 #include "../projections/Projection.h"
 #include "../spaces/Space.h"
 #include "../io/Config.h"
@@ -17,6 +18,7 @@
 using namespace gd;
 
 int main(int argc, char** argv) {
+        std::cerr << "START\n";
 	try {
 		Config cfg = parseArgs(argc, argv);
 		
@@ -24,24 +26,38 @@ int main(int argc, char** argv) {
                 Graph graph = reader.readGraphByName(cfg.graphName);
 
                 SpacePtr space = createSpace(cfg.spaceName, cfg.dimension);
+                BorderPolicyPtr borderPolicy = createBorderPolicy(
+                        cfg.borderPolicyName,
+                        cfg.dimension,
+                        cfg.seed
+                );
 
                 ProjectionPtr proj = createProjection(cfg.projectionName);
 
                 Embedding emb(graph, cfg.dimension);
 
                 InitialPlacementStrategyPtr init = createInitialPlacementStrategy(cfg.initialPlacementName);
-                init->computeInitial(emb, *space, cfg.figSize);
+                init->computeInitial(emb, *space, *borderPolicy);
 
                 LayoutAlgorithmPtr algo = createLayoutAlgorithm(cfg.algoName);
-                algo->computeLayout(emb, *space, cfg.figSize);
+                algo->computeLayout(emb, *space, *borderPolicy);
 
-                Embedding result = proj->project(emb, *space, cfg.dimension);
+                ProjectionResult res = proj->project(
+                        emb,
+                        *space,
+                        cfg.figSize,
+                        cfg.finalDimension
+                );
 
-                Metrics metrics = computeMetrics(result, *space, cfg.figSize);
+                Metrics metrics = computeMetrics(
+                        res.embedding,
+                        *res.space
+                );
 
                 writeEmbeddingJson(
                         cfg,
-                        result,
+                        res.embedding,
+                        *res.space,
                         metrics
                 );
                 
