@@ -6,7 +6,7 @@
 #include "../core/Errors.h"
 #include "../core/Graph.h"
 #include "../core/InitialPlacement.h"
-#include "../core/BorderPolicy.h"
+#include "../borderPolicy/BorderPolicy.h"
 #include "../projections/Projection.h"
 #include "../spaces/Space.h"
 #include "../io/Config.h"
