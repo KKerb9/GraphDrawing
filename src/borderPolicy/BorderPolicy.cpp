@@ -1,4 +1,5 @@
 #include "BorderPolicy.h"
+#include "PolyBorderPolicy.h"
 
 #include <iostream>
 #include <random>
@@ -54,6 +55,9 @@ BorderPolicyPtr createBorderPolicy(const std::string& name, int32_t dim, uint32_
 	if (name == "default") {
 		BorderPolicyInteractiveParams p = readBorderPolicyInteractiveParams(name, dim, std::cin, std::cerr);
 		return std::make_unique<DefaultBorderPolicy>(p, seed);
+	} else if (name == "poly") {
+		BorderPolicyInteractiveParams p = readBorderPolicyInteractiveParams(name, dim, std::cin, std::cerr);
+		return std::make_unique<PolyBorderPolicy>(p, dim, seed);
 	}
 	throw BorderPolicyError("Unknown border policy: " + name);
 }

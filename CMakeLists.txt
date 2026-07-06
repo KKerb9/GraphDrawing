@@ -9,6 +9,8 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
 add_executable(graph_drawing ${SOURCES})
 
+target_include_directories(graph_drawing PRIVATE src src/core)
+
 target_compile_features(graph_drawing PRIVATE cxx_std_17)
 target_link_libraries(graph_drawing PRIVATE nlohmann_json::nlohmann_json)
 

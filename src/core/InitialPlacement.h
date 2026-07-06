@@ -6,7 +6,7 @@
 #include "template.h"
 #include "Embedding.h"
 #include "Errors.h"
-#include "BorderPolicy.h"
+#include "borderPolicy/BorderPolicy.h"
 #include "../spaces/Space.h"
 
 namespace gd {

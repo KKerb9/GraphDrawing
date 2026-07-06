@@ -1,6 +1,7 @@
 #include "Config.h"
 
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -14,7 +15,7 @@ namespace gd {
 
 const std::vector<std::string> ALGO_NAMES = {"random", "far"};
 const std::vector<std::string> SPACE_NAMES = {"euclidean", "hyperbolic", "spherical"};
-const std::vector<std::string> BORDER_POLICY_NAMES = {"default"};
+const std::vector<std::string> BORDER_POLICY_NAMES = {"default", "poly"};
 const std::vector<std::string> INITIAL_PLACEMENT_NAMES = {"zero", "random"};
 const std::vector<std::string> PROJECTION_NAMES = {"identity", "orthogonal", "poincare"};
 
@@ -78,8 +79,10 @@ std::vector<int32_t> parseFigSize(std::string s, int32_t dim) {
 	return out;
 }
 
-std::vector<long double> parseBorderSideSizes(const std::string& s, int32_t dim) {
-	std::string data = s;
+std::vector<long double> parseBorderSideSizes(std::string data, int32_t dim) {
+	if (data.size() >= 2 && data.front() == '"' && data.back() == '"') {
+		data = data.substr(1, data.size() - 2);
+	}
 	for (char& ch : data) {
 		if (ch == ',') ch = ' ';
 	}
@@ -227,6 +230,7 @@ Config parseArgs(int argc, char** argv) {
 	return cfg;
 }
 
+// используется в фабрике при создании
 FaRInteractiveParams readFaRInteractiveParams(std::istream& in, std::ostream& out) {
 	out << "FaR (--C --I), empty = defaults: " << std::flush;
 	std::string line;
@@ -264,6 +268,7 @@ FaRInteractiveParams readFaRInteractiveParams(std::istream& in, std::ostream& ou
 	return FaRInteractiveParams{iters, c};
 }
 
+// используется в фабрике при создании
 BorderPolicyInteractiveParams readBorderPolicyInteractiveParams(
 	const std::string& borderPolicyName,
 	int32_t dim,
@@ -291,7 +296,7 @@ BorderPolicyInteractiveParams readBorderPolicyInteractiveParams(
 				throw ConfigError("BorderPolicy poly: expected --S, got: " + flag);
 			}
 			std::string val;
-			if (!(ls >> val)) {
+			if (!(ls >> std::quoted(val))) { // NOTE: без понятния как это работает
 				throw ConfigError("BorderPolicy poly: value after --S");
 			}
 			p.sideSizes = parseBorderSideSizes(val, dim);

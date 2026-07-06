@@ -148,18 +148,13 @@ Pt PoincareSpace::normalizePoint(const Pt& p, const std::vector<int32_t>& figSiz
 }
 
 ld PoincareSpace::volume(const std::vector<int32_t>& figSize) const {
-	// TODO: separate manifold volume from finite drawing-domain volume
 	if (static_cast<int32_t>(figSize.size()) != _dim) {
 		throw SpaceError("PoincareSpace::volume: figSize size != dim");
 	}
 	return std::numeric_limits<ld>::infinity();
 }
 
-bool PoincareSpace::areGeodesicSegmentsCrossing(
-		const Pt& a,
-		const Pt& b,
-		const Pt& c,
-		const Pt& d) const {
+bool PoincareSpace::areGeodesicSegmentsCrossing(const Pt& a, const Pt& b, const Pt& c, const Pt& d) const {
 	if (!isValid(a) || !isValid(b) || !isValid(c) || !isValid(d)) {
 		throw SpaceError("PoincareSpace::areGeodesicSegmentsCrossing: invalid point");
 	}

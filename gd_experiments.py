@@ -24,7 +24,7 @@ metricKeys = (
 )
 
 algosWithStdin = frozenset({"far"})
-borderPoliciesWithStdin = frozenset({"default"})
+borderPoliciesWithStdin = frozenset({"default", "poly"})
 
 stdinDefault = {
 	"far": "\n",
@@ -32,6 +32,7 @@ stdinDefault = {
 
 borderStdinDefault = {
 	"default": "\n",
+	"poly": "\n",
 }
 
 currentResult: Optional[Dict[str, Any]] = None
@@ -529,8 +530,6 @@ def bestOfN(
 	Имена результатов строятся из --output с суффиксом _batch_i; outDir переопределяет только каталог.
 	weights — коэффициенты по ключам из metricKeys; 0 пропускается, знак задаёт направление оптимизации.
 	"""
-	if n <= 0:
-		raise ValueError("bestOfN: n must be positive")
 	graphName, algoName, output = parseArgs(argv)
 	argvBaseSeed = None
 	if baseSeed is None:
