@@ -147,16 +147,12 @@ Pt HyperbolicSpace::normalizePoint(const Pt& p, const std::vector<int32_t>& figS
         if (static_cast<int32_t>(figSize.size()) != _dim) {
                 throw SpaceError("normalizePoint: figSize size != dim");
         }
-        const ld EPS = 1e-15L;
-        ld radius = (ld)*std::min_element(figSize.begin(), figSize.end()) / 2.0L;
-        Pt center(_dim, 0.0L);
-        ld d = dist(center, p);
-        if (d <= radius) return p;
-
-        Pt v = logMap(center, p);
-        ld vN = tangentNorm(center, v);
-        if (vN < EPS) return center;
-        return expMap(center, v / vN * radius);
+        Pt res = p;
+        for (int32_t i = 0; i < _dim; i++) {
+                ld bound = (ld)figSize[i] / 2.0L;
+                res[i] = std::min(bound, std::max(-bound, res[i]));
+        }
+        return res;
 }
 
 ld HyperbolicSpace::volume(const std::vector<int32_t>& figSize) const {
