@@ -118,6 +118,7 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
 
         sz = 170
         font_sz = 7
+        limit_pad = 0.04 if drawing_space == "poincare" else 0.08
 
         nx.draw_networkx_nodes(
                 G=g,
@@ -166,8 +167,10 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
 
         ax.set_aspect("equal", adjustable="box")
         if fig_size is not None:
-                ax.set_xlim(-fig_size[0] / 2.0, fig_size[0] / 2.0)
-                ax.set_ylim(-fig_size[1] / 2.0, fig_size[1] / 2.0)
+                pad_x = fig_size[0] * limit_pad
+                pad_y = fig_size[1] * limit_pad
+                ax.set_xlim(-fig_size[0] / 2.0 - pad_x, fig_size[0] / 2.0 + pad_x)
+                ax.set_ylim(-fig_size[1] / 2.0 - pad_y, fig_size[1] / 2.0 + pad_y)
         ax.axis("off")
 
         out_dir = os.path.dirname(output_path) or "."
