@@ -24,7 +24,7 @@ metricKeys = (
 )
 
 algosWithStdin = frozenset({"far"})
-borderPoliciesWithStdin = frozenset({"default"})
+borderPoliciesWithStdin = frozenset({"default", "poly"})
 
 stdinDefault = {
 	"far": "\n",
@@ -32,6 +32,7 @@ stdinDefault = {
 
 borderStdinDefault = {
 	"default": "\n",
+	"poly": "\n",
 }
 
 currentResult: Optional[Dict[str, Any]] = None

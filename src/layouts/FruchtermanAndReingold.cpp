@@ -35,7 +35,7 @@ void FruchtermanAndReingoldLayout::computeLayoutTest(
         int dim = space.dimension();
         assert(dim == emb.dimension());
         ld vol = borderPolicy.domainVolume(space);
-        ld k = cmp.sgn(vol) != -1 ? C * std::powl(vol / n, 1.0L / dim) : 1;
+        ld k = cmp.sgn(vol) != -1 ? C * std::powl(vol / n, 1.0L / dim) : 1;  // так в статье предлагали
 
         auto f_a = [ & ](ld x) -> ld {
                 return x * x / k;

@@ -57,7 +57,7 @@ BorderPolicyPtr createBorderPolicy(const std::string& name, int32_t dim, uint32_
 		return std::make_unique<DefaultBorderPolicy>(p, seed);
 	} else if (name == "poly") {
 		BorderPolicyInteractiveParams p = readBorderPolicyInteractiveParams(name, dim, std::cin, std::cerr);
-		return std::make_unique<PolyBorderPolicy>(p, seed);
+		return std::make_unique<PolyBorderPolicy>(p, dim, seed);
 	}
 	throw BorderPolicyError("Unknown border policy: " + name);
 }

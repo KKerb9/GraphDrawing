@@ -6,38 +6,28 @@
 #include <string>
 #include <vector>
 
+#include "BorderPolicy.h"
 #include "Errors.h"
 #include "template.h"
 #include "../spaces/Space.h"
 
 namespace gd {
 
-class PolyBorderPolicy {
+class PolyBorderPolicy : public BorderPolicy {
 public:
-	explicit PolyBorderPolicy(std::string name, int32_t dim, const std::vector<Pt>& figSize);
+	PolyBorderPolicy(const BorderPolicyInteractiveParams& params, int32_t dim, uint32_t seed);
 
-	virtual ~PolyBorderPolicy() = default;
+	Pt force(const Space& space, const Pt& point) const override;
 
-	std::string name() const;
+	Pt normalizePoint(const Space& space, const Pt& point) const override;
 
-	virtual Pt force(const Space& space, const Pt& point) const = 0;
+	Pt randomPoint(const Space& space) const override;
 
-	virtual Pt normalizePoint(const Space& space, const Pt& point) const = 0;
-
-	virtual Pt randomPoint(const Space& space) const = 0;
-
-	virtual ld domainVolume(const Space& space) const = 0;
+	ld domainVolume(const Space& space) const override;
 
 private:
-	std::string _name;
-        int32_t _dim;
-        std::vector<Pt> _figSize;
+	int32_t _dim;
+	std::vector<int32_t> _figSize;
+	mutable std::mt19937 _rng;
 };
 } // namespace gd
-
-
-/*
-доделай PolyBorderPolicy по размеченному мной шаблону. figSize принимает размеры, причем у нас poly вокруг главной точки (0, ..., 0), а остальные стороны как бы пополам делятся центром. То есть если в figSize есть число 10, то получим в одну сторону -5 в другую 5.
-Так же размерность poly тоже должна передаваться в аргументах.
-Максимально соблюдай весь кодстайл проекта и аутентичноть. Перепроверяй себя.
-*/
