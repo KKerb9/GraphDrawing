@@ -85,6 +85,7 @@ void writeEmbeddingJson(
 	out << "    \"minVertexDist\": " << metrics.minVertexDist << ",\n";
 	out << "    \"maxVertexDist\": " << metrics.maxVertexDist << ",\n";
 	out << "    \"avgVertexDist\": " << metrics.avgVertexDist << ",\n";
+	out << "    \"minEdgeVertexDist\": " << metrics.minEdgeVertexDist << ",\n";
         out.unsetf(std::ios::floatfield);
 	out << "    \"edgeCrossings\": " << metrics.edgeCrossings << ",\n";
         out << std::fixed << std::setprecision(6);

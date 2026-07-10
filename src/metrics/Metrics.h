@@ -24,6 +24,7 @@ struct Metrics {
 	ld minAngle;
 	ld maxAngle;
 	ld density;
+        ld minEdgeVertexDist;
 };
 
 Metrics computeMetrics(const Embedding& emb, const Space& space);

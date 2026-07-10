@@ -16,6 +16,7 @@ metricKeys = (
 	"minVertexDist",
 	"maxVertexDist",
 	"avgVertexDist",
+	"minEdgeVertexDist",
 	"edgeCrossings",
 	"minAngle",
 	"maxAngle",
