@@ -44,6 +44,9 @@ source: ../../PROJECT_REPORT.md
 
 Для `drawing_space == "poincare"` ребра рисуются как геодезики диска Пуанкаре.
 
+Для `drawing_space == "klein"` рендерер рисует границу диска и оставляет
+рёбра прямыми отрезками.
+
 ## Poincare geodesic в render.py
 
 `poincare_geodesic(a,b,radius,samples=80)` строит дугу окружности, ортогональной границе диска.
@@ -123,27 +126,81 @@ fig.savefig(..., dpi=180)
 
 ## gd_experiments.py
 
-Утилиты для notebooks и серий экспериментов.
+Интерфейс пакетных экспериментов на `pandas.DataFrame`. Каждый запуск — одна
+строка с метриками, путями, выводом процесса и maps применённых флагов. JSON
+с координатами и рёбрами остаётся отдельным файлом по `jsonPath`.
 
 | Функция | Назначение |
 |---|---|
-| `setupPlotStyle()` | Настройка matplotlib. |
+| `setupPlotStyle()` | Применяет общую тёмную Seaborn-тему. |
 | `compileGd(repo)` | CMake configure/build. |
-| `runGd(argv, repo, ...)` | Запуск `build/graph_drawing` с stdin. |
-| `runRender(repo,jsonPath,...)` | Запуск `render.py`. |
-| `setImageScore(res, score)` | Ручная запись `imageScore` в JSON. |
-| `compareResults(...)` | Табличное сравнение запусков. |
-| `plotMetricComparison(...)` | Bar plot метрик. |
-| `bestOfN(...)` | Серия запусков с scoring по весам. |
+| `runTest(repo, flags, ...)` | Один запуск и однострочный DataFrame. |
+| `runTests(repo, flags, n, ...)` | Серия из `n` запусков без агрегации метрик. |
+| `scoreRuns(df, weights)` | Добавляет score по map весов в копию DataFrame. |
+| `bestRun(df)` | Возвращает строку с максимальным score как DataFrame. |
+| `setImageScore(df, run, score)` | Меняет ручную оценку только в DataFrame. |
+| `renderRun(repo, df, run, ...)` | Рендерит JSON запуска и возвращает `Path` PNG. |
+| `displayTwo(image1, image2, ...)` | Показывает рядом два PNG графов для визуального сравнения. |
+| `plotMetrics(df, metric, title=..., info=...)` | Line plot одной метрики либо сетка всех метрик с заголовком и блоком подписи. |
 
-`bestOfN`:
+Флаги запуска передаются упорядоченными списками CLI-токенов:
 
-1. Делает `n` запусков.
-2. Может менять seed как `baseSeed + i`.
-3. Сохраняет результаты с `_batch_i`.
-4. Собирает метрики.
-5. Нормирует вклад выбранных метрик.
-6. Возвращает лучший запуск, scores и все runs.
+```python
+flags = ["--graph", "graph1", "--algo", "far", "--3d"]
+algoFlags = ["--C", "1.0", "--I", "100"]
+weights = {"volume": -1.0, "minVertexDist": 1.0}
+```
+
+Список передаётся бинарю в том же порядке. `flags`, `algoFlags` и `borderFlags`
+могут переиспользоваться и изменяться внутри generator: `runTests` копирует
+очередной список до запуска. Для совместимости также принимается dict, где
+порядок ключей задаёт порядок аргументов, а `None` передаёт флаг без значения.
+
+Callback `*ForRun` получает `range(n)` и выдаёт список флагов для каждого
+запуска:
+
+```python
+def flagsForRun(indices):
+    for index in indices:
+        flags[1] = graphs[index]
+        yield flags
+```
+
+Типовой поток:
+
+```python
+runs = runTests(repo, flags, 20, outDir=tempDir, algoFlags=algoFlags)
+scoredRuns = scoreRuns(runs, weights)
+best = bestRun(scoredRuns)
+plotMetrics(
+    scoredRuns,
+    "all",
+    title="baseTreePath",
+    info={"Граф": "baseTreePath", "Проекция": "kleinOrthogonal"},
+)
+```
+
+`plotMetrics` использует номер запуска по X и исходное значение метрики по Y;
+Seaborn вызывается без усреднения. `runTests` создаёт JSON с `_batch_i`.
+Если все строки имеют ненулевой `returnCode`, функция не рисует пустые оси, а
+показывает последние сообщения `stderr`: сначала нужно исправить запуск.
+
+Для сравнения отрендеренных запусков используйте `displayTwo`. Она принимает
+пути к PNG (или созданные из файлов `IPython.display.Image`), отдельные
+подписи и общий заголовок:
+
+```python
+displayTwo(
+    firstPng,
+    secondPng,
+    title1="kleinOrthogonal",
+    title2="kleinBestView",
+    title="baseTreePath",
+)
+```
+
+Артефакты проверок следует создавать во временном каталоге вне репозитория и
+удалять после окончания работы. Пользовательские результаты `out/` не удаляются.
 
 ## Notebooks
 
@@ -152,5 +209,5 @@ fig.savefig(..., dpi=180)
 - `test.ipynb`;
 - `far_test.ipynb`.
 
-Основная переиспользуемая логика вынесена в `gd_experiments.py`.
-
+Существующие notebooks остаются историческими артефактами и не обновляются под
+новый интерфейс. Основная переиспользуемая логика вынесена в `gd_experiments.py`.

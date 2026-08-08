@@ -1,6 +1,7 @@
 #include "Projection.h"
 
 #include "IdentityProjection.h"
+#include "KleinProjection.h"
 #include "OrthogonalProjection.h"
 #include "PoincareProjection.h"
 
@@ -63,7 +64,7 @@ std::vector<Pt> Projection::fitToFigSize(
 	return res;
 }
 
-ProjectionPtr createProjection(const std::string& projName) {
+ProjectionPtr createProjection(const std::string& projName, uint32_t seed, int32_t cameraCandidates) {
 	if (projName == "identity") {
 		return std::make_unique<IdentityProjection>();
 	}
@@ -72,6 +73,12 @@ ProjectionPtr createProjection(const std::string& projName) {
 	}
 	if (projName == "poincare") {
 		return std::make_unique<PoincareProjection>();
+	}
+	if (projName == "kleinOrthogonal") {
+		return std::make_unique<KleinProjection>(KleinProjectionMode::Orthogonal, seed, cameraCandidates);
+	}
+	if (projName == "kleinBestView") {
+		return std::make_unique<KleinProjection>(KleinProjectionMode::BestView, seed, cameraCandidates);
 	}
 	throw ProjectionError("createProjection: unknown projection name: " + projName);
 }

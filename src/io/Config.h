@@ -26,6 +26,7 @@ struct Config {
 	int32_t dimension = 2;
 	int32_t finalDimension = 2;
 	uint32_t seed = 0;
+	int32_t cameraCandidates = 1000;
 	std::vector<int32_t> figSize;
 
 	bool isValid() const;

@@ -65,7 +65,7 @@ source: ../../PROJECT_REPORT.md
 | `gen.py` | Генерация графов. |
 | `render.py` | 2D-визуализация JSON-результата. |
 | `render3d.py` | 3D-визуализация JSON-результата. |
-| `gd_experiments.py` | Утилиты для ноутбуков и пакетных экспериментов. |
+| `gd_experiments.py` | DataFrame-интерфейс для одиночных и пакетных экспериментов. |
 
 ## Сборка
 
@@ -94,6 +94,8 @@ Python-зависимости:
 matplotlib==3.10.8
 networkx==3.6.1
 pandas>=2.0.0
+numpy>=1.26.0
+seaborn>=0.13.0
 tqdm>=4.66.0
 ```
 
@@ -137,4 +139,3 @@ CLI
 - [[04_Space_Interface|Space interface]]
 - [[08_Layout_Algorithms|Алгоритмы раскладки]]
 - [[09_Projections|Проекции]]
-

@@ -41,6 +41,15 @@ Pt HyperbolicSpace::lift(const Pt& x) const {
         return res;
 }
 
+Pt HyperbolicSpace::toKlein(const Pt& x) const {
+        if (!isValid(x)) throw SpaceError("toKlein: size != dim");
+        ld sqNorm = 0.0L;
+        for (int32_t i = 0; i < _dim; i++) {
+                sqNorm += x[i] * x[i];
+        }
+        return x / std::sqrtl(1.0L + sqNorm);
+}
+
 Pt HyperbolicSpace::defaultToTangent(const Pt& def) const {
         if (static_cast<int32_t>(def.size()) != _dim + 1) {
                 throw SpaceError("defaultToTangent: size != dim + 1");

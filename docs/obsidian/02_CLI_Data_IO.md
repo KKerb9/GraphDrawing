@@ -19,12 +19,13 @@ source: ../../PROJECT_REPORT.md
 | `--space <name>` | `euclidean`, `hyperbolic`, `spherical`. | `euclidean` |
 | `--borderPolicy <name>` | `default`. | `default` |
 | `--initial-placement <name>` | `zero`, `random`. | `zero` |
-| `--projection <name>` | `identity`, `orthogonal`, `poincare`. | Автовыбор |
+| `--projection <name>` | `identity`, `orthogonal`, `poincare`, `kleinOrthogonal`, `kleinBestView`. | Автовыбор |
 | `--dim <n>` | Размерность вычислительного пространства. | `2` |
 | `--2d` | Итоговая размерность `2`. | Да |
 | `--3d` | Итоговая размерность `3`. | Нет |
 | `--FS <...>` | Размер области результата. | `[100, ..., 100]` |
 | `--seed <uint32>` | Seed генератора. | `steady_clock` |
+| `--cameraCandidates <int>` | Число камер для `kleinBestView`, включая базовую ортогональную. | `1000` |
 | `--dataset <path>` | Путь к датасету. | `samples/dataset.json` |
 | `--output <path>` | Путь к результату. | `out/<graph>_<algo>.json` |
 | `--help` | Справка. | - |
@@ -38,6 +39,14 @@ source: ../../PROJECT_REPORT.md
 3. Иначе выбирается `identity`.
 
 Важно: `identity` и `orthogonal` сейчас принимают только Euclidean space. Поэтому `--space hyperbolic --dim 3 --2d` без явной проекции выберет `orthogonal` и упадет уже в [[09_Projections|проекциях]].
+
+Для визуализации `H^n` в 2D Klein проекция задаётся явно:
+
+```bash
+printf '\n' | ./build/graph_drawing --graph SmallGraph --algo random --space hyperbolic --initial-placement random --dim 4 --2d --projection kleinBestView --cameraCandidates 1000 --FS 500,500 --seed 1543
+```
+
+`kleinBestView` использует `--seed` для детерминированной генерации камер.
 
 ## Формат `--FS`
 
@@ -155,7 +164,7 @@ n = max_id + 1
 
 Для 3D результата у вершин дополнительно пишется `"z"`.
 
-`dimension` - размерность после проекции. `fig_size` копируется из `cfg.figSize`; в `render.py` он задает пределы осей, а для Poincare также радиус `min(fig_size)/2`.
+`dimension` - размерность после проекции. `fig_size` копируется из `cfg.figSize`; в `render.py` он задает пределы осей, а для Poincare и Klein также радиус `min(fig_size)/2`.
 
 ## JsonGraphReader
 
@@ -192,4 +201,3 @@ n = max_id + 1
 Координаты пишутся с `std::fixed << std::setprecision(6)`.
 
 Writer предполагает итоговую размерность минимум `2`, что согласуется с текущими `--2d` и `--3d`.
-

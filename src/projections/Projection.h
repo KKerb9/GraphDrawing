@@ -42,6 +42,6 @@ protected:
 
 using ProjectionPtr = std::unique_ptr<Projection>;
 
-ProjectionPtr createProjection(const std::string& projName);
+ProjectionPtr createProjection(const std::string& projName, uint32_t seed = 0, int32_t cameraCandidates = 1000);
 
 } // namespace gd

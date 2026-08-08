@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
                         cfg.seed
                 );
 
-                ProjectionPtr proj = createProjection(cfg.projectionName);
+                ProjectionPtr proj = createProjection(cfg.projectionName, cfg.seed, cfg.cameraCandidates);
 
                 Embedding emb(graph, cfg.dimension);
 

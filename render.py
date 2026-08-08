@@ -3,6 +3,9 @@ import json
 import math
 import os
 
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -118,7 +121,7 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
 
         sz = 170
         font_sz = 7
-        limit_pad = 0.04 if drawing_space == "poincare" else 0.08
+        limit_pad = 0.04 if drawing_space in {"poincare", "klein"} else 0.08
 
         nx.draw_networkx_nodes(
                 G=g,
@@ -129,9 +132,9 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
                 linewidths=1.1,
                 node_size=sz,
         )
-        if drawing_space == "poincare":
+        if drawing_space in {"poincare", "klein"}:
                 if fig_size is None:
-                        raise ValueError("Poincare rendering requires fig_size")
+                        raise ValueError("Disk rendering requires fig_size")
                 radius = min(fig_size) / 2.0
                 boundary = plt.Circle(
                         (0.0, 0.0),
@@ -141,9 +144,19 @@ def draw_graph(g, pos, output_path, title=None, fig_size=None, drawing_space=Non
                         linewidth=1.1,
                 )
                 ax.add_patch(boundary)
-                for u, v in g.edges():
-                        xs, ys = poincare_geodesic(pos[u], pos[v], radius)
-                        ax.plot(xs, ys, color="#475467", linewidth=0.85, alpha=0.8, zorder=1)
+                if drawing_space == "poincare":
+                        for u, v in g.edges():
+                                xs, ys = poincare_geodesic(pos[u], pos[v], radius)
+                                ax.plot(xs, ys, color="#475467", linewidth=0.85, alpha=0.8, zorder=1)
+                else:
+                        nx.draw_networkx_edges(
+                                G=g,
+                                pos=pos,
+                                ax=ax,
+                                width=0.85,
+                                edge_color="#475467",
+                                alpha=0.8,
+                        )
         else:
                 nx.draw_networkx_edges(
                         G=g,
