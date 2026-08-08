@@ -14,7 +14,7 @@ source: ../../PROJECT_REPORT.md
 2. [[09_Projections#PoincareProjection|PoincareProjection]] поддерживает только `H2 -> 2D`.
 3. [[07_PoincareSpace|PoincareSpace]] поддерживает только `dim = 2`.
 4. `IdentityProjection` и `OrthogonalProjection` поддерживают только Euclidean space.
-5. Не реализована общая визуализация `hyperbolic dim > 2` в 2D/3D.
+5. `kleinOrthogonal` и `kleinBestView` реализуют `hyperbolic dim >= 2 -> 2D`, но общей визуализации `H^n -> 3D` нет.
 
 ## Ограничения metrics
 
@@ -77,27 +77,13 @@ source: ../../PROJECT_REPORT.md
 
 Принцип: геометрические формулы должны оставаться внутри `Space`, а не переезжать в layout или metrics.
 
-## Добавление `hyperbolic dim > 2 -> 2D`
+## Hyperbolic dim > 2 -> 2D
 
-Минимальный математический путь:
-
-```text
-x_0 = sqrt(1 + sum_i x_i^2)
-y_i = R x_i / (x_0 + 1)
-```
-
-Это дает Poincare ball. Но для 2D нужна отдельная стратегия снижения размерности:
-
-- первые две координаты;
-- PCA;
-- camera/projection plane;
-- геодезическая плоскость.
-
-Проекцию лучше назвать явно:
-
-- `poincare-first`;
-- `poincare-pca`;
-- `poincare-camera`.
+Для `H^n -> 2D` реализованы Klein-проекции. Они переводят spatial coordinates
+в `k = x / sqrt(1 + ||x||^2)`, затем применяют 2D камеру `A ∈ R^(2×n)`.
+Проекция сохраняет Klein-геодезики прямыми, но не сохраняет гиперболические
+расстояния. Для Poincare ball в произвольной размерности и для 3D-визуализации
+нужны отдельные проекции.
 
 ## Улучшение metrics
 
@@ -124,4 +110,3 @@ y_i = R x_i / (x_0 + 1)
 - убрать `spherical` до реализации;
 - убрать или реализовать `poly`;
 - сделать ошибки автовыбора проекции более ранними.
-

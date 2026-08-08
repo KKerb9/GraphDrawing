@@ -36,6 +36,8 @@ public:
 
         Pt lift(const Pt& x) const;
 
+        Pt toKlein(const Pt& x) const;
+
         Pt tangentToDefault(const Pt& at, const Pt& tangent) const;
         Pt defaultToTangent(const Pt& def) const;
 

@@ -104,6 +104,17 @@ y_i = R * x_i / (x_0 + 1)
 
 Только `H2 -> 2D`.
 
+## KleinProjection
+
+| Шаг | Формула/поведение |
+|---|---|
+| Lorentz -> Klein | `X_0 = sqrt(1 + ||x||^2)`, `k = x / X_0`. |
+| Камера | `A ∈ R^(2×n)`, `A A^T = I_2`, `y = A k`. |
+| `kleinOrthogonal` | Строки `A` — первые два базисных вектора. |
+| `kleinBestView` | Базовая камера и `--cameraCandidates - 1` случайных камер через Gram–Schmidt. |
+| Objective | `+minVertexDist`, `+minEdgeVertexDist`, `+minAngle`, `-edgeCrossings` после нормализации между кандидатами. |
+| Выход | `R y`, `R = min(figSize)/2`, внутри диска Klein радиуса `R`. |
+
 ## Metrics angle
 
 ```text

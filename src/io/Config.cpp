@@ -17,7 +17,7 @@ const std::vector<std::string> ALGO_NAMES = {"random", "far"};
 const std::vector<std::string> SPACE_NAMES = {"euclidean", "hyperbolic", "spherical"};
 const std::vector<std::string> BORDER_POLICY_NAMES = {"default", "poly"};
 const std::vector<std::string> INITIAL_PLACEMENT_NAMES = {"zero", "random"};
-const std::vector<std::string> PROJECTION_NAMES = {"identity", "orthogonal", "poincare"};
+const std::vector<std::string> PROJECTION_NAMES = {"identity", "orthogonal", "poincare", "kleinOrthogonal", "kleinBestView"};
 
 bool contains(const std::vector<std::string>& list, const std::string& s) {
 	for (const auto& x : list) {
@@ -49,6 +49,7 @@ void printHelp() {
 	std::cerr << "\t--3d final visualization dimension is 3\n";
 	std::cerr << "\t--FS <n1,n2,...> result figure size: exactly <final dimension> integers (default: 100 each)\n";
 	std::cerr << "\t--seed <uint32> random seed (default: random)\n";
+	std::cerr << "\t--cameraCandidates <int> cameras for kleinBestView (default: 1000)\n";
 	std::cerr << "\t--dataset <path> (default: samples/dataset.json)\n";
 	std::cerr << "\t--output <path> (default: out/<graph>_<algo>.json)\n";
 	std::cerr << "\t--help\n";
@@ -172,6 +173,16 @@ Config parseArgs(int argc, char** argv) {
 				throw;
 			} catch (const std::exception&) {
 				throw ConfigError("--seed must be a uint32 value");
+			}
+		} else if (arg == "--cameraCandidates") {
+			if (i + 1 >= argc) throw ConfigError("--cameraCandidates requires a value");
+			try {
+				cfg.cameraCandidates = std::stoi(argv[++i]);
+			} catch (const std::exception&) {
+				throw ConfigError("--cameraCandidates must be an integer");
+			}
+			if (cfg.cameraCandidates <= 0) {
+				throw ConfigError("--cameraCandidates must be positive");
 			}
 		} else {
 			throw ConfigError("Unknown argument: " + arg);

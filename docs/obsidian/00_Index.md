@@ -18,7 +18,7 @@ source: ../../PROJECT_REPORT.md
 6. [[06_HyperbolicSpace|HyperbolicSpace]] - гиперболоидная модель и лоренцевы формулы.
 7. [[07_PoincareSpace|PoincareSpace]] - диск Пуанкаре как пространство рисования.
 8. [[08_Layout_Algorithms|Алгоритмы раскладки]] - `random` и FaR через `logMap/expMap`.
-9. [[09_Projections|Проекции]] - `identity`, `orthogonal`, `poincare`.
+9. [[09_Projections|Проекции]] - `identity`, `orthogonal`, `poincare`, `kleinOrthogonal`, `kleinBestView`.
 10. [[10_Metrics|Метрики]] - что реально считается после проекции.
 11. [[11_Python_Tools|Python tools]] - `gen.py`, `render.py`, `render3d.py`, `gd_experiments.py`.
 12. [[12_Limitations_Roadmap|Ограничения и развитие]] - незавершенные места и рекомендации.
@@ -54,7 +54,7 @@ source: ../../PROJECT_REPORT.md
 
 - `HyperbolicSpace` хранит пространственную часть гиперболоида, а полную лоренцеву точку достраивает через `lift`.
 - `PoincareSpace` сейчас только 2D и используется как drawing space после проекции.
-- `PoincareProjection` поддерживает только `H2 -> 2D`.
+- `PoincareProjection` поддерживает только `H2 -> 2D`; для `Hn -> 2D` доступны Klein-проекции.
 - `OrthogonalProjection` и `IdentityProjection` работают только для Euclidean space.
+- `KleinSpace` — 2D drawing space с диском и прямыми геодезическими; его метрики описывают евклидову читаемость рисунка.
 - Метрики частично евклидовы даже после Poincare projection: vertex distances считаются по координатам, а не через `space.dist`.
-

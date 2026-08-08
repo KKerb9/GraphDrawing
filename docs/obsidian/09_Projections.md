@@ -148,6 +148,48 @@ PoincareSpace(2, R)
 
 Если `figSize = [500, 300]`, радиус равен `150`, потому что используется минимум сторон.
 
+## KleinProjection
+
+`kleinOrthogonal` и `kleinBestView` работают только для:
+
+```text
+space.name() == "hyperbolic"
+emb.dimension() >= 2
+finalDim == 2
+```
+
+Для spatial coordinates гиперболоида `x ∈ R^n` сначала строится точка
+`n`-мерного диска Клейна:
+
+```text
+X_0 = sqrt(1 + ||x||^2)
+k = x / X_0
+```
+
+Это выполняется до камеры. Обычная ортогональная проекция исходного `x`
+здесь не используется, потому что она не сохраняет прямолинейность Klein-геодезик.
+
+Камера хранится как матрица:
+
+```text
+A ∈ R^(2×n)
+A A^T = I_2
+y = A k
+```
+
+У `kleinOrthogonal` строки `A` равны первым двум базисным векторам. У
+`kleinBestView` первая камера такая же, а остальные строятся из нормальных
+случайных векторов с Gram–Schmidt. Генератор получает `--seed`, количество
+кандидатов задаётся `--cameraCandidates` и по умолчанию равно `1000`.
+
+Для каждого кандидата нормализуются значения `minVertexDist`,
+`minEdgeVertexDist`, `minAngle` и `edgeCrossings`. Первые три максимизируются,
+последняя минимизируется. При равном score выбирается первая камера.
+
+Проверяется `||k|| <= 1 - 1e-12` и `||y|| <= 1 - 1e-12`. Выход масштабируется
+на `R = min(figSize) / 2` и возвращается в `KleinSpace(2, R)`. Границы диска
+рисуются в `render.py`, а рёбра остаются обычными прямыми отрезками.
+
 ## Поддержка проекций
 
 | Проекция | Вход | Выход | Ограничение |
@@ -155,11 +197,10 @@ PoincareSpace(2, R)
 | `identity` | Euclidean | Euclidean | `finalDim == emb.dimension()` |
 | `orthogonal` | Euclidean | Euclidean | `finalDim <= emb.dimension()` |
 | `poincare` | Hyperbolic | Poincare | Только `H2 -> 2D` |
+| `kleinOrthogonal` | Hyperbolic | Klein | `Hn -> 2D`, первые две оси камеры |
+| `kleinBestView` | Hyperbolic | Klein | `Hn -> 2D`, выбор лучшей из случайных камер |
 
 Сейчас не реализованы:
 
-- `hyperbolic dim=3 -> --2d`;
-- `hyperbolic dim=4 -> --2d`;
 - `hyperbolic dim=3 -> --3d` через Poincare ball;
 - общая проекция неевклидовых пространств.
-
