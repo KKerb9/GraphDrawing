@@ -14,7 +14,8 @@ Metrics computeMetrics(const Embedding& emb, const Space& space) {
 	int32_t dim = emb.dimension();
 	auto pts = emb.getCoords();
 
-	res.volume = 0;  // NOTE: пока что закостылено на простую евклидову площадь
+	res.volume = 0;
+
 	if (n > 0) {
 		Pt mns = pts[0], mxs = pts[0];
 		for (const Pt &p : pts) {
@@ -23,10 +24,11 @@ Metrics computeMetrics(const Embedding& emb, const Space& space) {
 				mxs[j] = std::max(mxs[j], p[j]);
 			}
 		}
-		res.volume = 1;
+                std::vector<int32_t> figSize(dim);
 		for (int j = 0; j < dim; j++) {
-			res.volume *= mxs[j] - mns[j];
+			figSize[j] = mxs[j] - mns[j];
 		}
+                res.volume = space.volume(figSize);
 	}
 
 	res.edgeCrossings = 0;

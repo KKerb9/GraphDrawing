@@ -160,8 +160,7 @@ Graph JsonGraphReader::readGraphByName(const std::string& graphName) const {
 		int32_t u = pr.first;
 		int32_t v = pr.second;
 		if (std::max(u, v) >= n) {
-			throw JsonGraphReaderError(
-				"readGraphByName: edge endpoint out of range for graph");
+			throw JsonGraphReaderError("readGraphByName: edge endpoint out of range for graph");
 		}
 		g.addEdge(u, v);
 	}

@@ -69,14 +69,14 @@ ld EuclideanSpace::volume(const std::vector<int32_t>& figSize) const {
         if (static_cast<int32_t>(figSize.size()) != _dim) {
                 throw SpaceError("volume: figSize size != dim");
         }
-        std::vector<std::vector<ld>> gram(_dim, std::vector<ld>(_dim, 0.0L));
+        // std::vector<std::vector<ld>> gram(_dim, std::vector<ld>(_dim, 0.0L));
+        ld det = 1.0;
         for (int32_t i = 0; i < _dim; i++) {
-                for (int32_t j = 0; j < _dim; j++) {
-                        gram[i][j] = (i == j) ? (ld)figSize[i] * figSize[i] : 0.0L;
-                }
+                det *= (ld)figSize[i] * figSize[i];
+                // gram[i][i] = (ld)figSize[i] * figSize[i];
         }
-        ld det = Space::determinantBareiss(gram);
-        det = std::max(det, 0.0L);
+        // ld det = Space::determinantBareiss(gram);
+        // det = std::max(det, 0.0L);
         return std::sqrtl(det);
 }
 
