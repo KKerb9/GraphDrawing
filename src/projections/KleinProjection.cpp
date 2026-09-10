@@ -67,37 +67,36 @@ ProjectionResult KleinProjection::project(
 	const ld radius = static_cast<ld>(std::min(figSize[0], figSize[1])) / 2.0L;
 	std::vector<Pt> kleinCoords = toKleinCoords(emb, space);
 	std::vector<Pt> bestCamera = orthogonalCamera(emb.dimension());
-	if (_mode == KleinProjectionMode::BestView && !kleinCoords.empty()) {
+	if (_mode == KleinProjectionMode::BestView && _candidates > 1 && !kleinCoords.empty()) {
 		std::vector<std::vector<Pt>> cameras;
-		std::vector<std::vector<Pt>> candidates;
 		cameras.reserve(_candidates);
-		candidates.reserve(_candidates);
 		cameras.push_back(bestCamera);
-		candidates.push_back(projectWithCamera(kleinCoords, bestCamera, radius));
 
 		std::mt19937_64 rng(_seed);
 		for (int32_t i = 1; i < _candidates; i++) {
-			std::vector<Pt> camera = randomCamera(emb.dimension(), rng);
-			cameras.push_back(camera);
-			candidates.push_back(projectWithCamera(kleinCoords, camera, radius));
+			cameras.push_back(randomCamera(emb.dimension(), rng));
+		}
+
+		std::vector<std::vector<ld>> values(4, std::vector<ld>(_candidates));
+		KleinSpace drawingSpace(2, radius);
+		for (int32_t i = 0; i < _candidates; i++) {
+			Embedding current(emb.getGraph(), projectWithCamera(kleinCoords, cameras[i], radius));
+			Metrics metrics = computeMetrics(current, drawingSpace);
+			for (int32_t metric = 0; metric < 4; metric++) {
+				values[metric][i] = metricValue(metrics, metric);
+			}
 		}
 
 		std::vector<ld> scores(_candidates, 0.0L);
 		for (int32_t metric = 0; metric < 4; metric++) {
-			std::vector<ld> values(_candidates, 0.0L);
-			for (int32_t i = 0; i < _candidates; i++) {
-				Embedding current(emb.getGraph(), candidates[i]);
-				KleinSpace drawingSpace(2, radius);
-				values[i] = metricValue(computeMetrics(current, drawingSpace), metric);
-			}
-			ld minValue = *std::min_element(values.begin(), values.end());
-			ld maxValue = *std::max_element(values.begin(), values.end());
+			ld minValue = *std::min_element(values[metric].begin(), values[metric].end());
+			ld maxValue = *std::max_element(values[metric].begin(), values[metric].end());
 			if (minValue == maxValue) {
 				for (ld& score : scores) score += std::fabsl(metricWeight(metric));
 				continue;
 			}
 			for (int32_t i = 0; i < _candidates; i++) {
-				ld normalized = (values[i] - minValue) / (maxValue - minValue);
+				ld normalized = (values[metric][i] - minValue) / (maxValue - minValue);
 				scores[i] += metricWeight(metric) > 0.0L
 					? metricWeight(metric) * normalized
 					: std::fabsl(metricWeight(metric)) * (1.0L - normalized);

@@ -25,7 +25,7 @@ ProjectionResult OrthogonalProjection::project(
 	}
 	std::vector<Pt> res(emb.size());
 	for (int32_t i = 0; i < emb.size(); i++) {
-		Pt coord = emb.getCoord(i);
+		const Pt& coord = emb.getCoord(i);
 		res[i] = Pt(coord.begin(), coord.begin() + finalDim);
 	}
 	res = fitToFigSize(res, figSize, finalDim);

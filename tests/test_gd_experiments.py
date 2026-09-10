@@ -120,6 +120,91 @@ class GdExperimentsTest(unittest.TestCase):
 		self.assertEqual([call[2][1] for call in calls], ["5,5", "5,5,5", "5,5,5,5"])
 		self.assertTrue(all(isinstance(value, list) for value in df["flags"]))
 
+	def testBatchDatasetsReuseGraphsAndPreserveSourceFlags(self):
+		"""Проверяет один разбор на датасет, первые имена, callbacks и удаление файлов."""
+		with tempfile.TemporaryDirectory() as tmp:
+			repo = Path(tmp)
+			(repo / "samples").mkdir()
+			first = {"name": "SmallGraph", "nodes": [0, 1], "edges": [[0, 1]]}
+			other = {"name": "other", "nodes": [0], "edges": []}
+			(repo / "samples/dataset.json").write_text(json.dumps([None, {"name": 1}, first, other, {"name": "SmallGraph", "edges": []}]), encoding="utf-8-sig")
+			second = repo / "second.json"
+			second.write_text(json.dumps([other]))
+			flags = [[], ["--graph", "other"], [], ["--dataset", str(second), "--graph", "other"]]
+			paths, entries = [], []
+
+			def fakeRun(repo, flags, **kwargs):
+				path = Path(gd.flagValue(flags, "--dataset"))
+				paths.append(path)
+				entries.append(json.loads(path.read_text()))
+				return pd.DataFrame([{"flags": flags, "run": 1}])
+
+			with patch("gd_experiments.json.load", wraps=json.load) as load, patch("gd_experiments.runTest", side_effect=fakeRun):
+				df = gd.runTests(repo, [], 4, flagsForRun=lambda indices: iter(flags))
+			self.assertEqual(load.call_count, 2)
+			self.assertEqual(entries, [[first], [other], [first], [other]])
+			self.assertEqual(paths[0], paths[2])
+			self.assertNotEqual(paths[1], paths[3])
+			self.assertTrue(all(not path.parent.exists() for path in paths))
+			self.assertEqual([gd.flagValue(value, "--dataset") for value in df["flags"]], [None, None, None, str(second)])
+			self.assertEqual(flags[0], [])
+
+	def testBatchDatasetInvalidation(self):
+		"""Проверяет перечитывание изменённого файла внутри одной серии."""
+		with tempfile.TemporaryDirectory() as tmp:
+			repo = Path(tmp)
+			path = repo / "dataset.json"
+			entries = []
+
+			def flagsForRun(indices):
+				for i in indices:
+					path.write_text(json.dumps([{"name": "SmallGraph", "nodes": list(range(i + 1)), "edges": []}]))
+					yield {"--dataset": str(path)}
+
+			def fakeRun(repo, flags, **kwargs):
+				entries.append(json.loads(Path(flags["--dataset"]).read_text()))
+				return pd.DataFrame([{"flags": flags, "run": 1}])
+
+			with patch("gd_experiments.json.load", wraps=json.load) as load, patch("gd_experiments.runTest", side_effect=fakeRun):
+				gd.runTests(repo, {}, 2, flagsForRun=flagsForRun)
+			self.assertEqual(load.call_count, 2)
+			self.assertEqual([entry[0]["nodes"] for entry in entries], [[0], [0, 1]])
+
+	def testBatchDatasetFallsBackForInvalidInputs(self):
+		"""Проверяет передачу ошибок исходному reader, включая ошибку после нужного графа."""
+		with tempfile.TemporaryDirectory() as tmp:
+			repo = Path(tmp)
+			path = repo / "dataset.json"
+			for data in ('[', '{}', '[]', '[{"name":"SmallGraph","edges":[]},', '[{"name":"SmallGraph","edges":[]},{"value":NaN}]', '[{"name":"SmallGraph","edges":[]},{"value":1e400}]'):
+				with self.subTest(data=data):
+					path.write_text(data)
+					with patch("gd_experiments.runTest", return_value=pd.DataFrame([{"flags": {}, "run": 1}])) as run:
+						gd.runTests(repo, {"--dataset": str(path)}, 2)
+					self.assertTrue(all(call.args[1]["--dataset"] == str(path) for call in run.call_args_list))
+			path.write_text('[{"name":"SmallGraph","edges":[]}]')
+			with patch("gd_experiments.runTest", return_value=pd.DataFrame([{"flags": [], "run": 1}])) as run:
+				gd.runTests(repo, ["--dataset", str(path), "--graph"], 1)
+			self.assertIn("--graph", run.call_args.args[1])
+			self.assertEqual(gd.flagValue(run.call_args.args[1], "--dataset"), str(path))
+
+	def testBatchDatasetCleanupOnException(self):
+		"""Проверяет удаление выделенного графа, если запуск выбросил исключение."""
+		with tempfile.TemporaryDirectory() as tmp:
+			repo = Path(tmp)
+			path = repo / "dataset.json"
+			path.write_text('[{"name":"SmallGraph","nodes":[0],"edges":[]}]')
+			paths = []
+
+			def fakeRun(repo, flags, **kwargs):
+				paths.append(Path(flags["--dataset"]))
+				self.assertTrue(paths[-1].is_file())
+				raise RuntimeError("interrupted run")
+
+			with patch("gd_experiments.runTest", side_effect=fakeRun), self.assertRaisesRegex(RuntimeError, "interrupted run"):
+				gd.runTests(repo, {"--dataset": str(path)}, 2)
+			self.assertFalse(paths[0].parent.exists())
+			self.assertTrue(path.is_file())
+
 	def testScoreRunsAndBestRun(self):
 		"""Проверяет положительные, отрицательные и константные вклады score."""
 		df = pd.DataFrame({

@@ -22,7 +22,7 @@ python3 render.py --help
 ## Итоговая асимптотика
 Формула для итоговой асимптотики: $$\mathcal{O}(\text{Reader}) + \mathcal{O}(\text{InitialPlacement}) + \mathcal{O}(LayoutAlgoRun) + \mathcal{O}(Project) + \mathcal{O}(ComputeMetrics) + \mathcal{O}(\text{Writer})$$
 
-- $\mathcal{O}(\text{Reader}) = \mathcal{O}(\text{Input}) + \mathcal{O}(\text{M})$
+- $\mathcal{O}(\text{Reader}) = \mathcal{O}(\text{Input}) + \mathcal{O}(\text{M}) + \mathcal{O}(\text{N})$
 - $\mathcal{O}(\text{InitialPlacement}) = \begin{cases} 
 \mathcal{O}(\text{N} \times \text{Dim}), \text{ random} \\
 \mathcal{O}(\text{N} \times \text{Dim}), \text{ zero}

@@ -4,6 +4,7 @@ import json
 import math
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Tuple, Union
 
@@ -290,6 +291,54 @@ def nextFlags(iterator: Optional[Iterator[FlagValues]], default: Optional[FlagVa
 	return None if default is None else copyFlags(default)
 
 
+def datasetFloat(value: str) -> float:
+	"""Разбирает JSON-число, отклоняя нечисловые константы и переполнение, как C++."""
+	res = float(value)
+	if not math.isfinite(res):
+		raise ValueError("dataset: non-finite number")
+	return res
+
+
+def datasetForBatchRun(repo: Path, flags: FlagValues, cache: dict, directory: Path) -> Optional[Path]:
+	"""Выделяет граф во временный JSON, кешируя датасет и его первые записи по имени.
+
+	Кеш принадлежит одной серии; изменение файла инвалидирует его запись.
+	Ошибочные входы передаются исходному C++ reader для обычного returnCode/stderr.
+	"""
+	argv = flagsToArgv(flags)
+	for i, value in enumerate(argv):
+		if value in ("--dataset", "--graph") and (i + 1 == len(argv) or isCliFlag(argv[i + 1])):
+			return None
+	path = Path(str(flagValue(flags, "--dataset", "samples/dataset.json") or "samples/dataset.json"))
+	path = (path if path.is_absolute() else repo / path).resolve()
+	try:
+		stat = path.stat()
+	except OSError:
+		return None
+	version = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+	if path not in cache or cache[path][0] != version:
+		graphs = {}
+		try:
+			with open(path, encoding="utf-8-sig") as f:
+				data = json.load(f, parse_float=datasetFloat, parse_constant=datasetFloat)
+			if isinstance(data, list):
+				for item in data:
+					if isinstance(item, dict) and isinstance(item.get("name"), str):
+						graphs.setdefault(item["name"], item)
+		except (OSError, ValueError):
+			pass
+		cache[path] = (version, graphs, {})
+	_, graphs, paths = cache[path]
+	name = str(flagValue(flags, "--graph", "SmallGraph") or "SmallGraph")
+	if name not in graphs:
+		return None
+	if name not in paths:
+		with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".json", dir=directory, delete=False) as f:
+			json.dump([graphs[name]], f, ensure_ascii=True, allow_nan=False)
+			paths[name] = Path(f.name)
+	return paths[name]
+
+
 def runTests(
 	repo: Path,
 	flags: FlagValues,
@@ -310,6 +359,9 @@ def runTests(
 	используется базовый список.
 	`baseSeed` создаёт последовательность `baseSeed + i`, а `outDir` задаёт
 	каталог для JSON серии. Метрики не усредняются и не оцениваются этой функцией.
+	Неизменный датасет читается один раз; C++ получает временный файл выбранного
+	графа. В `flags` результата остаётся исходный датасет для повторного запуска.
+	Временные файлы удаляются при завершении серии, в том числе при исключении.
 	"""
 	if n <= 0:
 		raise ValueError("runTests: n must be positive")
@@ -323,14 +375,21 @@ def runTests(
 	algoIterator = iter(algoFlagsForRun(runIndices)) if algoFlagsForRun is not None else None
 	borderIterator = iter(borderFlagsForRun(runIndices)) if borderFlagsForRun is not None else None
 	runs: list[pd.DataFrame] = []
-	for i in range(n):
-		currentFlags = nextFlags(flagsIterator, flags) or []
-		currentFlags = flagsForBatchRun(repo, currentFlags, i, outDir, seed)
-		currentAlgoFlags = nextFlags(algoIterator, algoFlags)
-		currentBorderFlags = nextFlags(borderIterator, borderFlags)
-		res = runTest(repo, currentFlags, algoFlags=currentAlgoFlags, borderFlags=currentBorderFlags)
-		res.loc[:, "run"] = i + 1
-		runs.append(res)
+	cache = {}
+	with tempfile.TemporaryDirectory(prefix="gd-datasets-") as tmp:
+		for i in range(n):
+			currentFlags = nextFlags(flagsIterator, flags) or []
+			currentFlags = flagsForBatchRun(repo, currentFlags, i, outDir, seed)
+			currentAlgoFlags = nextFlags(algoIterator, algoFlags)
+			currentBorderFlags = nextFlags(borderIterator, borderFlags)
+			dataset = datasetForBatchRun(repo, currentFlags, cache, Path(tmp))
+			runFlags = copyFlags(currentFlags)
+			if dataset is not None:
+				setFlagValue(runFlags, "--dataset", str(dataset))
+			res = runTest(repo, runFlags, algoFlags=currentAlgoFlags, borderFlags=currentBorderFlags)
+			res.at[res.index[0], "flags"] = currentFlags
+			res.loc[:, "run"] = i + 1
+			runs.append(res)
 	return pd.concat(runs, ignore_index=True)
 
 

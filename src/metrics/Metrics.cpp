@@ -8,11 +8,11 @@ Metrics computeMetrics(const Embedding& emb, const Space& space) {
 	Metrics res;
 	Comparator cmp;
 	int32_t n = emb.size();
-	auto graph = emb.getGraph();
-	auto edges = graph.edges();
+	const auto& graph = emb.getGraph();
+	const auto& edges = graph.edges();
 	int32_t m = edges.size();
 	int32_t dim = emb.dimension();
-	auto pts = emb.getCoords();
+	const auto& pts = emb.getCoords();
 
 	res.volume = 0;
 

@@ -169,24 +169,11 @@ ld HyperbolicSpace::volume(const std::vector<int32_t>& figSize) const {
                 throw SpaceError("volume: figSize size != dim");
         }
 
-        Pt origin(_dim, 0.0L);
-        std::vector<Pt> edges(_dim, Pt(_dim, 0.0L));
+        ld res = 1.0L;
         for (int32_t i = 0; i < _dim; i++) {
-                edges[i][i] = (ld)figSize[i];
+                res *= std::fabsl((ld)figSize[i]);
         }
-
-        std::vector<std::vector<ld>> gram(_dim, std::vector<ld>(_dim, 0.0L));
-        for (int32_t i = 0; i < _dim; i++) {
-                for (int32_t j = 0; j < _dim; j++) {
-                        ld ni = tangentNorm(origin, edges[i]);
-                        ld nj = tangentNorm(origin, edges[j]);
-                        ld nij = tangentNorm(origin, edges[i] + edges[j]);
-                        gram[i][j] = (nij * nij - ni * ni - nj * nj) / 2.0L;
-                }
-        }
-        ld det = Space::determinantBareiss(gram);
-        det = std::max(det, 0.0L);
-        return std::sqrtl(det);
+        return res;
 }
 
 bool HyperbolicSpace::areGeodesicSegmentsCrossing(
