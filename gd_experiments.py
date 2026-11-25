@@ -71,15 +71,21 @@ def binaryPath(repo: Path) -> Path:
 	return repo / "build" / "graph_drawing"
 
 
-def compileGd(repo: Path, buildDir: str = "build") -> None:
+def compileGd(repo: Path, buildDir: str = "build", buildType: Optional[str] = None) -> None:
 	"""Конфигурирует и собирает CMake-проект.
 
 	Аргумент `repo` задаёт корень репозитория, а `buildDir` — имя или путь
-	к каталогу CMake относительно него.
+	к каталогу CMake относительно него. `buildType` задаёт тип сборки CMake.
 	"""
 	buildPath = repo / buildDir
 	buildPath.mkdir(parents=True, exist_ok=True)
-	subprocess.run(["cmake", "-S", str(repo), "-B", str(buildPath)], cwd=repo, check=True)
+	command = ["cmake", "-S", str(repo), "-B", str(buildPath)]
+	if buildType is not None:
+		command.append(f"-DCMAKE_BUILD_TYPE={buildType}")
+		jsonDir = repo / "build" / "_deps" / "nlohmann_json-install" / "share" / "cmake" / "nlohmann_json"
+		if jsonDir.is_dir():
+			command.append(f"-Dnlohmann_json_DIR={jsonDir}")
+	subprocess.run(command, cwd=repo, check=True)
 	subprocess.run(["cmake", "--build", str(buildPath)], cwd=repo, check=True)
 
 
@@ -205,6 +211,7 @@ def runTest(
 	*,
 	algoFlags: Optional[FlagValues] = None,
 	borderFlags: Optional[FlagValues] = None,
+	binary: Optional[Union[str, Path]] = None,
 ) -> pd.DataFrame:
 	"""Выполняет один запуск graph_drawing и возвращает его результат в DataFrame.
 
@@ -213,6 +220,7 @@ def runTest(
 	Dict остаётся доступным только для совместимости со старым кодом.
 	Результат всегда содержит одну строку с метриками, путями, stdout/stderr
 	и копиями применённых списков. Координаты и рёбра остаются в JSON по `jsonPath`.
+	`binary` позволяет использовать другую сборку вместо `build/graph_drawing`.
 	"""
 	currentFlags = copyFlags(flags)
 	currentAlgoFlags = None if algoFlags is None else copyFlags(algoFlags)
@@ -220,7 +228,7 @@ def runTest(
 	borderLine = stdinLine(currentFlags, currentBorderFlags, "border")
 	algoLine = stdinLine(currentFlags, currentAlgoFlags, "algo")
 	stdin = None if borderLine is None and algoLine is None else (borderLine or "") + (algoLine or "")
-	command = [str(binaryPath(repo))] + flagsToArgv(currentFlags)
+	command = [str(binary if binary is not None else binaryPath(repo))] + flagsToArgv(currentFlags)
 	if stdin is None:
 		process = subprocess.run(command, cwd=repo, capture_output=True, text=True, stdin=subprocess.DEVNULL)
 	else:
@@ -351,6 +359,7 @@ def runTests(
 	algoFlagsForRun: Optional[Callable[[range], Iterable[FlagValues]]] = None,
 	borderFlags: Optional[FlagValues] = None,
 	borderFlagsForRun: Optional[Callable[[range], Iterable[FlagValues]]] = None,
+	binary: Optional[Union[str, Path]] = None,
 ) -> pd.DataFrame:
 	"""Выполняет `n` запусков и собирает все исходные результаты в DataFrame.
 
@@ -362,6 +371,7 @@ def runTests(
 	Неизменный датасет читается один раз; C++ получает временный файл выбранного
 	графа. В `flags` результата остаётся исходный датасет для повторного запуска.
 	Временные файлы удаляются при завершении серии, в том числе при исключении.
+	`binary` позволяет выбрать бинарь для всех запусков серии.
 	"""
 	if n <= 0:
 		raise ValueError("runTests: n must be positive")
@@ -386,7 +396,10 @@ def runTests(
 			runFlags = copyFlags(currentFlags)
 			if dataset is not None:
 				setFlagValue(runFlags, "--dataset", str(dataset))
-			res = runTest(repo, runFlags, algoFlags=currentAlgoFlags, borderFlags=currentBorderFlags)
+			kwargs = {"algoFlags": currentAlgoFlags, "borderFlags": currentBorderFlags}
+			if binary is not None:
+				kwargs["binary"] = binary
+			res = runTest(repo, runFlags, **kwargs)
 			res.at[res.index[0], "flags"] = currentFlags
 			res.loc[:, "run"] = i + 1
 			runs.append(res)

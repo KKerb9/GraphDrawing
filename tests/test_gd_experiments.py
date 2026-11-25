@@ -47,6 +47,18 @@ class GdExperimentsTest(unittest.TestCase):
 			self.assertEqual(df.at[0, "algoFlags"], {"--C": 1.0})
 			self.assertEqual(df.at[0, "minAngle"], 6)
 
+	def testRunTestsUsesSpecifiedBinary(self):
+		"""Проверяет передачу выбранной сборки в фактическую команду запуска."""
+		with tempfile.TemporaryDirectory() as tmp:
+			repo = Path(tmp)
+			binary = repo / "release" / "graph_drawing"
+			with patch("gd_experiments.subprocess.run") as run:
+				run.return_value.returncode = 0
+				run.return_value.stdout = ""
+				run.return_value.stderr = ""
+				gd.runTests(repo, {"--graph": "tree"}, 1, binary=binary)
+			self.assertEqual(run.call_args.args[0][0], str(binary))
+
 	def testRunTestsAddsNumbersSeedsAndBatchOutputs(self):
 		"""Проверяет номера запусков, seed и имена JSON пакетной серии."""
 		calls = []

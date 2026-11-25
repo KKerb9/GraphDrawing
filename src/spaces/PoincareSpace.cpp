@@ -164,8 +164,7 @@ bool PoincareSpace::areGeodesicSegmentsCrossing(const Pt& a, const Pt& b, const 
 		for (const ld x : p) sqNorm += x * x;
 		return p * (2.0L / (1.0L + sqNorm));
 	};
-	return areEuclideanSegmentsCrossing2D(
-		toKlein(a), toKlein(b), toKlein(c), toKlein(d));
+	return areEuclideanSegmentsCrossing2D(toKlein(a), toKlein(b), toKlein(c), toKlein(d));
 }
 
 bool PoincareSpace::isValid(const Pt& c) const {
